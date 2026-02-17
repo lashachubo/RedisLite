@@ -95,27 +95,25 @@ int main() {
                 ssize_t bytes_received = read(client_fd, buffer, sizeof(buffer));
 
                 if (bytes_received > 0) {
-                    // 1. Convert the buffer to a string
+                    // convert the buffer to a string
                   std::string raw_data(buffer);
                   std::vector<std::string> args = split_command(raw_data);
 
                   if (args.empty()) return 0;
 
-                  std::string command = args[0]; // e.g., "SET" or "GET"
+                  std::string command = args[0]; // SET/GET
 
                   if (command == "SET" && args.size() >= 3) {
-                      // args[1] is the Key, args[2] is the Value
                       g_database[args[1]] = args[2];
                       send(client_fd, "+OK\r\n", 5, 0);
                   } 
                   else if (command == "GET" && args.size() >= 2) {
-                      // Look up the key in our map
                       if (g_database.count(args[1])) {
                           std::string val = g_database[args[1]];
                           std::string response = "$" + std::to_string(val.length()) + "\r\n" + val + "\r\n";
                           send(client_fd, response.c_str(), response.length(), 0);
                       } else {
-                          send(client_fd, "$-1\r\n", 5, 0); // Redis way of saying "Not Found"
+                          send(client_fd, "$-1\r\n", 5, 0);
                       }
                   } 
                   else {
