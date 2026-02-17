@@ -6,6 +6,10 @@
 #include <fcntl.h>
 #include <sys/epoll.h>
 #include <cstring>
+#include <unordered_map>
+#include <string>
+#include <sstream>
+#include <vector>
 
 #define MAX_EVENTS 10
 #define PORT 6379
@@ -14,6 +18,18 @@
 void set_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
+
+std::unordered_map<std::string, std::string> g_database;
+
+std::vector<std::string> split_command(std::string cmd) {
+    std::stringstream ss(cmd);
+    std::string word;
+    std::vector<std::string> parts;
+    while (ss >> word) {
+        parts.push_back(word);
+    }
+    return parts;
 }
 
 int main() {
@@ -79,10 +95,32 @@ int main() {
                 ssize_t bytes_received = read(client_fd, buffer, sizeof(buffer));
 
                 if (bytes_received > 0) {
-                    std::cout << "[Client] " << buffer << std::flush;
-                    
-                    const char* response = "[message recieved]\r\n";
-                    send(client_fd, response, strlen(response), 0);
+                    // 1. Convert the buffer to a string
+                  std::string raw_data(buffer);
+                  std::vector<std::string> args = split_command(raw_data);
+
+                  if (args.empty()) return 0;
+
+                  std::string command = args[0]; // e.g., "SET" or "GET"
+
+                  if (command == "SET" && args.size() >= 3) {
+                      // args[1] is the Key, args[2] is the Value
+                      g_database[args[1]] = args[2];
+                      send(client_fd, "+OK\r\n", 5, 0);
+                  } 
+                  else if (command == "GET" && args.size() >= 2) {
+                      // Look up the key in our map
+                      if (g_database.count(args[1])) {
+                          std::string val = g_database[args[1]];
+                          std::string response = "$" + std::to_string(val.length()) + "\r\n" + val + "\r\n";
+                          send(client_fd, response.c_str(), response.length(), 0);
+                      } else {
+                          send(client_fd, "$-1\r\n", 5, 0); // Redis way of saying "Not Found"
+                      }
+                  } 
+                  else {
+                      send(client_fd, "-ERR unknown command\r\n", 22, 0);
+                  }
                 } 
                 else if (bytes_received == 0) {
                     std::cout << "[Server] Client disconnected" << std::endl;
