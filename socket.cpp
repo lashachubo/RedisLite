@@ -1,59 +1,98 @@
-#include "iostream"
-#include "cstring"
-#include "sys/socket.h" // socket(), bind(), listen(), accept(), send(), setsockopt()
-#include "netinet/in.h" // sockaddr_in, AF_INET, INADDR_ANY, htons()
-#include "unistd.h" //read(), close()
+#include <iostream>
+#include <vector>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
+#include <cstring>
 
-int main(){
-  // 1.create socket
-  // AF_INET = IPv4, SOCK_STREAM = TCP
-  int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+#define MAX_EVENTS 10
+#define PORT 6379
 
-  // 2. Define the address 
-  sockaddr_in address;
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = INADDR_ANY; // listens to all networks
-  address.sin_port = htons (6379);
+// make a socket non-blocking
+void set_nonblocking(int fd) {
+    int flags = fcntl(fd, F_GETFL, 0);
+    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+}
 
-  // 3. bind the socket - assigns the adress to the socket
-  if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-      perror("bind failed");
-      return -1;
-  }
-  
-  // 4. Listen
-  listen(server_fd, 3);
-  std::cout << "Server is waiting\n";
+int main() {
 
-  // 5. accept
-  int addrlen = sizeof(address);
-  int client_socket = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
-  std::cout << "client connected\n";
-
-  // 6. read data with 5 second timeout
-  struct timeval timeout;
-  timeout.tv_sec = 300;
-  timeout.tv_usec = 0;
-  setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-
-  while(true){
-    char buffer[1024] = {0};
-    ssize_t bytes_recieved = read(client_socket, buffer, 1024);
-
-    if(bytes_recieved > 0){
-      std::cout << "\nClient said: " << buffer;
-
-      const char* reply = "hello\r\n";
-      send(client_socket, reply, strlen(reply), 0);
-    } else {
-      const char* reply = "timeout\r\n";
-      send(client_socket, reply, strlen(reply), 0);
+    // 1. create socket
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == -1) {
+        perror("Socket failed");
+        return 1;
     }
-  }
 
-  // 7. end connection
-  close(client_socket);
-  close(server_fd);
+    // prevents "Address already in use" errors
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-  return 0;
+    // 2. bind
+    sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
+        perror("Bind failed");
+        return 1;
+    }
+
+    listen(server_fd, SOMAXCONN);
+    set_nonblocking(server_fd);
+
+    std::cout << "Redis Clone listening on port " << PORT << "..." << std::endl;
+
+    // 3. epoll
+    int epoll_fd = epoll_create1(0);
+    struct epoll_event ev, events[MAX_EVENTS];
+
+    // allow multiple connections
+    ev.events = EPOLLIN; 
+    ev.data.fd = server_fd;
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_fd, &ev);
+
+    while (true) {
+        int nfds = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
+
+        for (int n = 0; n < nfds; ++n) {
+            if (events[n].data.fd == server_fd) {
+                struct sockaddr_in client_addr;
+                socklen_t addrlen = sizeof(client_addr);
+                int client_socket = accept(server_fd, (struct sockaddr*)&client_addr, &addrlen);
+                
+                set_nonblocking(client_socket);
+                
+                // add new client to watchlist
+                ev.events = EPOLLIN | EPOLLET;
+                ev.data.fd = client_socket;
+                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &ev);
+                
+                std::cout << "[Server] New connection accepted" << std::endl;
+
+            } else {
+                // client sent data
+                int client_fd = events[n].data.fd;
+                char buffer[1024] = {0};
+                ssize_t bytes_received = read(client_fd, buffer, sizeof(buffer));
+
+                if (bytes_received > 0) {
+                    std::cout << "[Client] " << buffer << std::flush;
+                    
+                    const char* response = "[message recieved]\r\n";
+                    send(client_fd, response, strlen(response), 0);
+                } 
+                else if (bytes_received == 0) {
+                    std::cout << "[Server] Client disconnected" << std::endl;
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
+                    close(client_fd);
+                }
+            }
+        }
+    }
+
+    close(server_fd);
+    return 0;
 }
