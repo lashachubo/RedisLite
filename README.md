@@ -1,4 +1,4 @@
-# Redis++
+# Redis Lite
 
 A lightweight Redis compatible server written in C++. Supports multiple simultaneous clients using `epoll`, non-blocking I/O, and an in memory key value store with optional key expiration.
 
@@ -8,7 +8,7 @@ A lightweight Redis compatible server written in C++. Supports multiple simultan
 - Non-blocking sockets
 - In-memory key-value store
 - Key expiration with `SET [key] [value] EX [seconds]`
-- Responds to `PING`, `SET`, `GET` and `DEL` commands
+- Responds to `PING`, `SET`, `GET`, `DEL`, `LPUSH` and `LRANGE` commands
 
 ## Build
 
@@ -41,6 +41,8 @@ nc localhost 6379
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
 | `GET` | `GET [key]` | Returns the value for the key, or `$-1` if not found/expired |
 | `DEL` | `DEL [key]` | Returns `:1` if deletion successful, `:0` if not found |
+| `LPUSH` | `LPUSH [key] [value]` | Inserts a value at the head of the list. Returns the list length |
+| `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
 
 ## How It Works
 

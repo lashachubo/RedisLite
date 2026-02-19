@@ -17,7 +17,8 @@
 
 // data and expiration time
 struct Entry {
-  std::string value;
+  std::string value;  //  GET/SET
+  std::vector<std::string> list; // LPUSH/LRANGE
   long long expires_at;
 };
 
@@ -53,7 +54,7 @@ void load_database() {
   std::string key, val;
   long long exp;
   while (file >> key >> val >> exp) {
-    g_database[key] = {val, exp};
+    g_database[key] = {val, {}, exp};
   }
 }
 
@@ -96,7 +97,32 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     size_t deleted_count = g_database.erase(args[1]);
     std::string response = ":" + std::to_string(deleted_count) + "\r\n";
     send(client_fd, response.c_str(), response.length(), 0);
-  } else if (command == "PING") {
+  } else if (command == "LPUSH" && args.size() >= 3) {
+    g_database[args[1]].list.insert(g_database[args[1]].list.begin(), args[2]);
+    
+    std::string response = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n";
+    send(client_fd, response.c_str(), response.length(), 0);
+    save_database();
+  } else if (command == "LRANGE" && args.size() >= 4) {
+    if (g_database.count(args[1])) {
+      auto& l = g_database[args[1]].list;
+      int start = std::stoi(args[2]);
+      int end = std::stoi(args[3]);
+      
+      // bounds checking
+      if (start < 0) start = 0;
+      if (end >= l.size()) end = l.size() - 1;
+
+      std::string response = "*" + std::to_string(end - start + 1) + "\r\n";
+      for (int i = start; i <= end; i++) {
+        response += "$" + std::to_string(l[i].length()) + "\r\n" + l[i] + "\r\n";
+      }
+      send(client_fd, response.c_str(), response.length(), 0);
+    } else {
+      send(client_fd, "*0\r\n", 4, 0); // empty array
+    }
+  }
+   else if (command == "PING") {
     send(client_fd, "+PONG\r\n", 7, 0);
   }
   else {
