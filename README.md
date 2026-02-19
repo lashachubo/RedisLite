@@ -8,7 +8,7 @@ A lightweight Redis compatible server written in C++. Supports multiple simultan
 - Non-blocking sockets
 - In-memory key-value store
 - Key expiration with `SET [key] [value] EX [seconds]`
-- Responds to `PING`, `SET`, and `GET` commands
+- Responds to `PING`, `SET`, `GET` and `DEL` commands
 
 ## Build
 
@@ -37,9 +37,10 @@ nc localhost 6379
 | Command | Syntax | Description |
 |---|---|---|
 | `PING` | `PING` | Returns `+PONG`. Used to check if server is alive |
-| `SET` | `SET key value` | Stores a value under the given key |
-| `SET` with expiry | `SET key value EX seconds` | Stores a value that expires after N seconds |
-| `GET` | `GET key` | Returns the value for the key, or `$-1` if not found/expired |
+| `SET` | `SET [key] [value]` | Stores a value under the given key |
+| `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
+| `GET` | `GET [key]` | Returns the value for the key, or `$-1` if not found/expired |
+| `DEL` | `DEL [key]` | Returns `:1` if deletion successful, `:0` if not found |
 
 ## How It Works
 

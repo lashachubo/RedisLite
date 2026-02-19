@@ -10,6 +10,7 @@
 #include <string>
 #include <sstream>
 #include <chrono>
+#include <fstream>
 
 #define MAX_EVENTS 10
 #define PORT 6379
@@ -39,6 +40,23 @@ std::vector<std::string> split_command(std::string cmd) {
   return parts;
 }
 
+void save_database() {
+  std::ofstream file("dump.txt");
+  for (auto const& [key, entry] : g_database) {
+    file << key << " " << entry.value << " " << entry.expires_at << "\n";
+  }
+  std::cout << "[Server] Database saved to disk." << std::endl;
+}
+
+void load_database() {
+  std::ifstream file("dump.txt");
+  std::string key, val;
+  long long exp;
+  while (file >> key >> val >> exp) {
+    g_database[key] = {val, exp};
+  }
+}
+
 void process_and_reply(int client_fd, const std::vector<std::string>& args) {
   if (args.empty()) return;
 
@@ -59,8 +77,7 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 
     g_database[args[1]] = e;
     send(client_fd, "+OK\r\n", 5, 0);
-  } 
-  else if (command == "GET" && args.size() >= 2) {
+  } else if (command == "GET" && args.size() >= 2) {
     if (g_database.count(args[1])) {
       Entry& e = g_database[args[1]];
       
@@ -75,8 +92,11 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     } else {
       send(client_fd, "$-1\r\n", 5, 0);
     }
-  } 
-  else if (command == "PING") {
+  } else if (command == "DEL" && args.size() >= 2) {
+    size_t deleted_count = g_database.erase(args[1]);
+    std::string response = ":" + std::to_string(deleted_count) + "\r\n";
+    send(client_fd, response.c_str(), response.length(), 0);
+  } else if (command == "PING") {
     send(client_fd, "+PONG\r\n", 7, 0);
   }
   else {
@@ -85,6 +105,8 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 }
 
 int main() {
+
+  load_database();
 
   // create socket
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -151,12 +173,15 @@ int main() {
 
           // check if full line
           size_t pos;
-          while ((pos = client_buffers[client_fd].find("\r\n")) != std::string::npos) {
+          while ((pos = client_buffers[client_fd].find('\n')) != std::string::npos) {
             std::string full_command = client_buffers[client_fd].substr(0, pos);
+            if (!full_command.empty() && full_command.back() == '\r') {
+              full_command.pop_back();
+            }
 
             std::vector<std::string> args = split_command(full_command);
             process_and_reply(client_fd, args);
-            client_buffers[client_fd].erase(0, pos + 2);
+            client_buffers[client_fd].erase(0, pos + 1);
           }
         } 
         else if (bytes_received <= 0) {
