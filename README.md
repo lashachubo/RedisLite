@@ -7,19 +7,18 @@ A lightweight Redis compatible server written in C++. Supports multiple simultan
 - Multi-client support via `epoll` (Linux)
 - Non-blocking sockets
 - In-memory key-value store
-- Key expiration with `SET [key] [value] EX [seconds]`
-- Commands: `PING`, `SET`, `GET`, `DEL`, `LPUSH`, `RPUSH`, `LRANGE`, `INFO`, `FLUSHALL`
+- [Commands](#supported-commands)
 
 ## Build
 
 ```bash
-g++ main.cpp -o redis
+g++ main.cpp -o redisLite
 ```
 
 ## Run
 
 ```bash
-./redis_clone
+./redisLite
 ```
 
 The server listens on port **6379** by default
