@@ -45,7 +45,7 @@ nc localhost 6379
 | `LPUSH` | `LPUSH [key] [value]` | Inserts a value at the head of the list. Returns the list length |
 | `RPUSH` | `RPUSH [key] [value]` | Insert value at the end (literally `push_back()` )  |
 | `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
-| `FLUSHALL` | Clean the entire database |
+| `FLUSHALL` | `FLUSHALL` | Clean the entire database |
 
 ## How It Works
 
