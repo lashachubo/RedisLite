@@ -8,7 +8,7 @@ A lightweight Redis compatible server written in C++. Supports multiple simultan
 - Non-blocking sockets
 - In-memory key-value store
 - Key expiration with `SET [key] [value] EX [seconds]`
-- Commands: `PING`, `SET`, `GET`, `DEL`, `LPUSH`, `RPUSH`, `LRANGE`, `INFO`
+- Commands: `PING`, `SET`, `GET`, `DEL`, `LPUSH`, `RPUSH`, `LRANGE`, `INFO`, `FLUSHALL`
 
 ## Build
 

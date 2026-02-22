@@ -128,7 +128,7 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
       }
       send(client_fd, response.c_str(), response.length(), 0);
     } else {
-      send(client_fd, "*0\r\n", 4, 0); // empty array
+      send(client_fd, "*0\r\n", 4, 0);
     }
     
   } else if (command == "INFO") {
