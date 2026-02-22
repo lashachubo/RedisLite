@@ -75,7 +75,7 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     }
 
     g_database[args[1]] = e;
-    send(client_fd, "+OK\r\n", 5, 0);
+    send(client_fd, "+OK\r\n\n", 5, 0);
     
   } else if (command == "GET" && args.size() >= 2) {
     if (g_database.count(args[1])) {
@@ -83,24 +83,24 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
       
       if (e.expires_at != 0 && now > e.expires_at) {
         g_database.erase(args[1]);
-        send(client_fd, "$-1\r\n", 5, 0);
+        send(client_fd, "$-1\r\n\n", 5, 0);
       } else {
-        std::string response = "$" + std::to_string(e.value.length()) + "\r\n" + e.value + "\r\n";
+        std::string response = "$" + std::to_string(e.value.length()) + "\r\n" + e.value + "\r\n\n";
         send(client_fd, response.c_str(), response.length(), 0);
       }
     } else {
-      send(client_fd, "$-1\r\n", 5, 0);
+      send(client_fd, "$-1\r\n\n", 5, 0);
     }
 
   } else if (command == "DEL" && args.size() >= 2) {
     size_t deleted_count = g_database.erase(args[1]);
-    std::string response = ":" + std::to_string(deleted_count) + "\r\n";
+    std::string response = ":" + std::to_string(deleted_count) + "\r\n\n";
     send(client_fd, response.c_str(), response.length(), 0);
 
   } else if (command == "LPUSH" && args.size() >= 3) {
     g_database[args[1]].list.insert(g_database[args[1]].list.begin(), args[2]);
     
-    std::string response = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n";
+    std::string response = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n\n";
     send(client_fd, response.c_str(), response.length(), 0);
     save_database();
 
@@ -108,7 +108,7 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     for (size_t i = 2; i < args.size(); i++) {
       g_database[args[1]].list.push_back(args[i]);
     }
-    std::string res = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n";
+    std::string res = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n\n";
     send(client_fd, res.c_str(), res.length(), 0);
     save_database();
 
@@ -124,7 +124,7 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 
       std::string response = "*" + std::to_string(end - start + 1) + "\r\n";
       for (int i = start; i <= end; i++) {
-        response += "$" + std::to_string(l[i].length()) + "\r\n" + l[i] + "\r\n";
+        response += "$" + std::to_string(l[i].length()) + "\r\n" + l[i] + "\r\n\n";
       }
       send(client_fd, response.c_str(), response.length(), 0);
     } else {
@@ -209,7 +209,6 @@ int main() {
         std::cout << "[Server] New connection accepted" << std::endl;
 
       } else {
-        // client sent data
         int client_fd = events[n].data.fd;
         char buffer[1024] = {0};
         ssize_t bytes_received = read(client_fd, buffer, sizeof(buffer));
