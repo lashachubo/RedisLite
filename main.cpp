@@ -15,14 +15,13 @@
 #define MAX_EVENTS 10
 #define PORT 6379
 
-// data and expiration time
 struct Entry {
   std::string value;  //  GET/SET
   std::vector<std::string> list; // LPUSH/LRANGE
   long long expires_at;
 };
 
-// make a socket non-blocking
+// make a socket nonblocking
 void set_nonblocking(int fd) {
   int flags = fcntl(fd, F_GETFL, 0);
   fcntl(fd, F_SETFL, flags | O_NONBLOCK);
@@ -61,7 +60,6 @@ void load_database() {
 void process_and_reply(int client_fd, const std::vector<std::string>& args) {
   if (args.empty()) return;
 
-  // current time in milliseconds
   long long now = std::chrono::duration_cast<std::chrono::milliseconds>(
   std::chrono::system_clock::now().time_since_epoch()).count();
 
@@ -78,11 +76,11 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 
     g_database[args[1]] = e;
     send(client_fd, "+OK\r\n", 5, 0);
+    
   } else if (command == "GET" && args.size() >= 2) {
     if (g_database.count(args[1])) {
-      Entry& e = g_database[args[1]];
+      Entry& e = g_database[args[1]]; 
       
-      // key expiration check
       if (e.expires_at != 0 && now > e.expires_at) {
         g_database.erase(args[1]);
         send(client_fd, "$-1\r\n", 5, 0);
@@ -93,16 +91,27 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     } else {
       send(client_fd, "$-1\r\n", 5, 0);
     }
+
   } else if (command == "DEL" && args.size() >= 2) {
     size_t deleted_count = g_database.erase(args[1]);
     std::string response = ":" + std::to_string(deleted_count) + "\r\n";
     send(client_fd, response.c_str(), response.length(), 0);
+
   } else if (command == "LPUSH" && args.size() >= 3) {
     g_database[args[1]].list.insert(g_database[args[1]].list.begin(), args[2]);
     
     std::string response = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n";
     send(client_fd, response.c_str(), response.length(), 0);
     save_database();
+
+  } else if (command == "RPUSH" && args.size() >= 3) {
+    for (size_t i = 2; i < args.size(); i++) {
+      g_database[args[1]].list.push_back(args[i]);
+    }
+    std::string res = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n";
+    send(client_fd, res.c_str(), res.length(), 0);
+    save_database();
+
   } else if (command == "LRANGE" && args.size() >= 4) {
     if (g_database.count(args[1])) {
       auto& l = g_database[args[1]].list;
@@ -121,11 +130,23 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     } else {
       send(client_fd, "*0\r\n", 4, 0); // empty array
     }
-  }
-   else if (command == "PING") {
+    
+  } else if (command == "INFO") {
+    std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
+    info += "connected_clients: " + std::to_string(client_buffers.size()) + "\n";
+    
+    std::string res = "$" + std::to_string(info.length()) + "\r\n" + info + "\r\n";
+    send(client_fd, res.c_str(), res.length(), 0);
+
+  } else if (command == "PING") {
     send(client_fd, "+PONG\r\n", 7, 0);
-  }
-  else {
+
+  } else if (command == "FLUSHALL") {
+    g_database.clear();
+    save_database();
+    send(client_fd, "+OK\r\n", 5, 0);
+  
+  } else {
     send(client_fd, "-ERR unknown command\r\n", 22, 0);
   }
 }
