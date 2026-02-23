@@ -1,12 +1,20 @@
 # Redis Lite
 
-A lightweight Redis compatible server written in C++. Supports multiple simultaneous clients using `epoll`, non-blocking I/O, and an in memory key value store with optional key expiration.
+A lightweight Redis clone written in C++. Supports multiple simultaneous clients using `epoll`, non-blocking I/O and an in memory key value store.
+
+## How It Works
+
+1. A TCP socket is created and bound to port 6379
+2. `epoll` watches all connected clients for incoming data
+3. When a client sends a command, it is buffered until a full line is received
+4. The command is parsed and dispatched to `process_and_reply()`
+5. The response is sent back in Redis protocol format (RESP)
 
 ## Features
 
-- Multi-client support via `epoll` (Linux)
+- Multi-client support via `epoll`
 - Non-blocking sockets
-- In-memory key-value store
+- In memory key value store
 - [Commands](#supported-commands)
 
 ## Build
@@ -40,19 +48,14 @@ nc localhost 6379
 | `FLUSHALL` | `FLUSHALL` | Clear the entire database |
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
-| `GET` | `GET [key]` | Returns the value for the key, or `$-1` if not found/expired |
-| `DEL` | `DEL [key]` | Returns `:1` if deletion successful. `:0` if not found |
+| `GET` | `GET [key]` | Returns the value for the key |
+| `DEL` | `DEL [key]` | Delete existing key |
 | `LPUSH` | `LPUSH [key] [value]` | Inserts a value at the head of the list. Returns the list length |
 | `RPUSH` | `RPUSH [key] [value]` | Insert value at the end of the list |
 | `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
+| `LTRIM` | `LTRIM [start_index] [end_index]` | Trim a list |
+| `RENAME` | `RENAME [key_name] [new_key_name]` | Rename existing keys |
 
-## How It Works
-
-1. A TCP socket is created and bound to port 6379
-2. `epoll` watches all connected clients for incoming data
-3. When a client sends a command, it is buffered until a full line is received
-4. The command is parsed and dispatched to `process_and_reply()`
-5. The response is sent back in Redis protocol format (RESP)
 
 ## Project Structure
 

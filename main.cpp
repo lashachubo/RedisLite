@@ -18,6 +18,7 @@
 struct Entry {
   std::string value;  //  GET/SET
   std::vector<std::string> list; // LPUSH/LRANGE
+  bool is_list = false;
   long long expires_at;
 };
 
@@ -53,7 +54,11 @@ void load_database() {
   std::string key, val;
   long long exp;
   while (file >> key >> val >> exp) {
-    g_database[key] = {val, {}, exp};
+    Entry e;
+    e.value = val;
+    e.expires_at = exp;
+    e.is_list = false;
+    g_database[key] = e;
   }
 }
 
@@ -99,12 +104,14 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 
   } else if (command == "LPUSH" && args.size() >= 3) {
     g_database[args[1]].list.insert(g_database[args[1]].list.begin(), args[2]);
+    g_database[args[1]].is_list = true;
     
     std::string response = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n\n";
     send(client_fd, response.c_str(), response.length(), 0);
     save_database();
 
   } else if (command == "RPUSH" && args.size() >= 3) {
+    g_database[args[1]].is_list = true;
     for (size_t i = 2; i < args.size(); i++) {
       g_database[args[1]].list.push_back(args[i]);
     }
@@ -131,6 +138,51 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
       send(client_fd, "*0\r\n", 4, 0);
     }
     
+  } else if (command == "LTRIM" && args.size() >= 4) {
+    if (g_database.count(args[1])) {
+      Entry& e = g_database[args[1]];
+
+      if (!e.is_list) {
+        std::string err = "-WRONGTYPE that key does not hold a list\r\n\n";
+        send(client_fd, err.c_str(), err.length(), 0);
+      }
+
+      auto& l = e.list;
+      int n = l.size();
+      int start = std::stoi(args[2]);
+      int end = std::stoi(args[3]);
+
+      if (start < 0) start = n + start;
+      if (end < 0) end = n + end;
+      
+      if (start < 0) start = 0;
+      if (start >= n) {
+        l.clear(); 
+      } else {
+        if (end >= n) end = n - 1;
+        if (start > end) {
+          l.clear();
+        } else {
+          std::vector<std::string> trimmed(l.begin() + start, l.begin() + end + 1);
+          l = trimmed;
+        }
+      }
+      save_database();
+      send(client_fd, "+OK\r\n\n", 5, 0);
+    } else {
+      send(client_fd, "-ERR no such key\r\n\n", 5, 0);
+    }
+
+  } else if (command == "RENAME" && args.size() >= 3) {
+    if (g_database.count(args[1])) {
+      g_database[args[2]] = g_database[args[1]];
+      g_database.erase(args[1]);
+      save_database();
+      send(client_fd, "+OK\r\n\n", 5, 0);
+    } else {
+      send(client_fd, "-ERR no such key\r\n\n", 18, 0);
+    }
+
   } else if (command == "INFO") {
     std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
     info += "connected_clients: " + std::to_string(client_buffers.size()) + "\n";
