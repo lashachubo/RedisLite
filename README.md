@@ -54,7 +54,7 @@ nc localhost 6379
 | `RPUSH` | `RPUSH [key] [value]` | Insert value at the end of the list |
 | `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
 | `LTRIM` | `LTRIM [start_index] [end_index]` | Trim a list |
-| `RENAME` | `RENAME [key_name] [new_key_name]` | Rename existing keys |
+| `RENAME` | `RENAME [key] [new_key]` | Rename existing keys |
 
 
 ## Project Structure
