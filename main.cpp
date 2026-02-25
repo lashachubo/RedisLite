@@ -1,23 +1,24 @@
-#include <iostream>
-#include <vector>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/epoll.h>
-#include <cstring>
-#include <unordered_map>
-#include <string>
-#include <sstream>
-#include <chrono>
-#include <fstream>
+#include "iostream"
+#include "vector"
+#include "sys/socket.h"
+#include "netinet/in.h"
+#include "unistd.h"
+#include "fcntl.h"
+#include "sys/epoll.h"
+#include "cstring"
+#include "unordered_map"
+#include "string"
+#include "sstream"
+#include "chrono"
+#include "fstream"
+#include "deque"
 
 #define MAX_EVENTS 10
 #define PORT 6379
 
 struct Entry {
   std::string value;  //  GET/SET
-  std::vector<std::string> list; // LPUSH/LRANGE
+  std::deque<std::string> list; // LPUSH/LRANGE
   bool is_list = false;
   long long expires_at;
 };
@@ -41,26 +42,6 @@ std::vector<std::string> split_command(std::string cmd) {
   return parts;
 }
 
-void save_database() {
-  std::ofstream file("dump.txt");
-  for (auto const& [key, entry] : g_database) {
-    file << key << " " << entry.value << " " << entry.expires_at << "\n";
-  }
-  std::cout << "[Server] Database saved to disk." << std::endl;
-}
-
-void load_database() {
-  std::ifstream file("dump.txt");
-  std::string key, val;
-  long long exp;
-  while (file >> key >> val >> exp) {
-    Entry e;
-    e.value = val;
-    e.expires_at = exp;
-    e.is_list = false;
-    g_database[key] = e;
-  }
-}
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args) {
   if (args.empty()) return;
@@ -80,7 +61,7 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     }
 
     g_database[args[1]] = e;
-    send(client_fd, "+OK\r\n\n", 5, 0);
+    send(client_fd, "+OK\r\n\n", 6, 0);
     
   } else if (command == "GET" && args.size() >= 2) {
     if (g_database.count(args[1])) {
@@ -108,7 +89,6 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     
     std::string response = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n\n";
     send(client_fd, response.c_str(), response.length(), 0);
-    save_database();
 
   } else if (command == "RPUSH" && args.size() >= 3) {
     g_database[args[1]].is_list = true;
@@ -117,7 +97,6 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     }
     std::string res = ":" + std::to_string(g_database[args[1]].list.size()) + "\r\n\n";
     send(client_fd, res.c_str(), res.length(), 0);
-    save_database();
 
   } else if (command == "LRANGE" && args.size() >= 4) {
     if (g_database.count(args[1])) {
@@ -163,11 +142,10 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
         if (start > end) {
           l.clear();
         } else {
-          std::vector<std::string> trimmed(l.begin() + start, l.begin() + end + 1);
+          std::deque<std::string> trimmed(l.begin() + start, l.begin() + end + 1);
           l = trimmed;
         }
       }
-      save_database();
       send(client_fd, "+OK\r\n\n", 5, 0);
     } else {
       send(client_fd, "-ERR no such key\r\n\n", 5, 0);
@@ -177,7 +155,6 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     if (g_database.count(args[1])) {
       g_database[args[2]] = g_database[args[1]];
       g_database.erase(args[1]);
-      save_database();
       send(client_fd, "+OK\r\n\n", 5, 0);
     } else {
       send(client_fd, "-ERR no such key\r\n\n", 18, 0);
@@ -195,7 +172,6 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 
   } else if (command == "FLUSHALL") {
     g_database.clear();
-    save_database();
     send(client_fd, "+OK\r\n", 5, 0);
   
   } else {
@@ -204,8 +180,6 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 }
 
 int main() {
-
-  load_database();
 
   // create socket
   int server_fd = socket(AF_INET, SOCK_STREAM, 0);
