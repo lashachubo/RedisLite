@@ -1,8 +1,7 @@
+
+
 # Commands to Add
 
-## Optimization
-
-Instead of a billion `else if` statements use the prefix trie (same algorithm autocompletions use)
 
 ## String Commands
 
