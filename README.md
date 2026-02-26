@@ -1,6 +1,6 @@
 # Redis Lite
 
-A lightweight Redis clone written in C++. Supports multiple simultaneous clients using `epoll`, non-blocking I/O and an in memory key value store.
+A lightweight Redis clone written in C++. Supports multiple simultaneous clients using `epoll`, nonblocking I/O and an in memory key value store.
 
 ## How It Works
 
@@ -12,21 +12,21 @@ A lightweight Redis clone written in C++. Supports multiple simultaneous clients
 
 ## Features
 
-- Multi-client support via `epoll`
-- Non-blocking sockets
+- Multi client support via `epoll`
+- Nonblocking sockets
 - In memory key value store
 - [Commands](#supported-commands)
 
 ## Build
 
 ```bash
-g++ main.cpp -o redisLite
+make
 ```
 
 ## Run
 
 ```bash
-./redisLite
+./server
 ```
 
 The server listens on port **6379** by default
@@ -60,5 +60,9 @@ nc localhost 6379
 ## Project Structure
 
 ```
-main.cpp   — all server logic
+entry.h      — data types for keys
+commands.h   — extern globals + function prototypes
+commands.cpp — all commands
+main.cpp     — server setup and event loop
+Makefile     — build
 ```
