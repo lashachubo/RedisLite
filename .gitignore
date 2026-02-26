@@ -1,1 +1,3 @@
-test
+commands.o
+main.o
+server
