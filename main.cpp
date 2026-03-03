@@ -1,14 +1,14 @@
-#include "iostream"
-#include "sys/socket.h"
-#include "netinet/in.h"
-#include "unistd.h"
-#include "fcntl.h"
-#include "sys/epoll.h"
-#include "cstring"
-#include "string"
+#include <iostream>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
+#include <cstring>
+#include <string>
 #include "commands.h"
 
-#define MAX_EVENTS 10
+#define MAX_EVENTS 1024
 #define PORT 6379
 
 void set_nonblocking(int fd) {
