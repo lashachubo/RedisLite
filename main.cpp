@@ -11,12 +11,10 @@
 #define MAX_EVENTS 1024
 #define PORT 6379
 
-// Parses one command from buf (RESP or inline), fills args, erases consumed bytes.
-// Returns false if buf doesn't yet contain a complete command.
 bool parse_resp(std::string& buf, std::vector<std::string>& args) {
   if (buf.empty()) return false;
   if (buf[0] != '*') {
-    // inline fallback (telnet / plain text)
+    // inline fallback
     size_t pos = buf.find('\n');
     if (pos == std::string::npos) return false;
     std::string line = buf.substr(0, pos);

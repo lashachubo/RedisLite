@@ -55,6 +55,11 @@ nc localhost 6379
 | `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
 | `LTRIM` | `LTRIM [start_index] [end_index]` | Trim a list |
 | `RENAME` | `RENAME [key] [new_key]` | Rename existing keys |
+| `INCR` | `INCR [key]` | Increase value by 1 |
+| `INCRBY` | `INCRBY [key] [ammount]` | Increase value by x |
+| `DECR` | `DECR [key]` | Decrease value by 1 |
+| `DECRBY` | `DECRBY [key] [ammount]` | Decrease value by x |
+
 
 
 ## Project Structure

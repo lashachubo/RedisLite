@@ -25,7 +25,7 @@ void cmd_set(int client_fd, const std::vector<std::string>& args, long long now)
   e.value = args[2];
   if (args.size() == 4 && args[3] == "EX") { send(client_fd, "-ERR no EX time given\r\n\n", 24, 0); return; }
   if (args.size() >= 5 && args[3] == "EX") {
-    if (std::stoll(args[4])) { send(client_fd, "-ERR EX time must be more than 0\r\n\n", 35, 0); return; }
+    if (std::stoll(args[4]) <= 0) { send(client_fd, "-ERR EX time must be more than 0\r\n\n", 35, 0); return; }
     long long ex = std::stoll(args[4]);
     e.expires_at = now + (ex * 1000);
   }
@@ -139,6 +139,63 @@ void cmd_rename(int client_fd, const std::vector<std::string>& args, long long n
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
+void cmd_incr(int client_fd, const std::vector<std::string>& args, long long now) {
+  if (args.size() != 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+  auto& val = g_database[args[1]].value;
+  try {
+    long long n = std::stoll(val) + 1;
+    val = std::to_string(n);
+    std::string res = ":" + val + "\r\n\n";
+    send(client_fd, res.c_str(), res.length(), 0);
+  } catch (...) {
+    send(client_fd, "-ERR value is not an integer\r\n\n", 31, 0);
+  }
+}
+
+void cmd_incrby(int client_fd, const std::vector<std::string>& args, long long now) {
+  if (args.size() != 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+  auto& val = g_database[args[1]].value;
+  try {
+    long long n = std::stoll(val) + std::stoll(args[2]);
+    val = std::to_string(n);
+    std::string res = ":" + val + "\r\n\n";
+    send(client_fd, res.c_str(), res.length(), 0);
+  } catch (...) {
+    send(client_fd, "-ERR value is not an integer\r\n\n", 31, 0);
+  }
+}
+
+void cmd_decr(int client_fd, const std::vector<std::string>& args, long long now) {
+  if (args.size() != 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+  auto& val = g_database[args[1]].value;
+  try {
+    long long n = std::stoll(val) - 1;
+    val = std::to_string(n);
+    std::string res = ":" + val + "\r\n\n";
+    send(client_fd, res.c_str(), res.length(), 0);
+  } catch (...) {
+    send(client_fd, "-ERR value is not an integer\r\n\n", 31, 0);
+  }
+}
+
+void cmd_decrby(int client_fd, const std::vector<std::string>& args, long long now) {
+  if (args.size() != 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+  auto& val = g_database[args[1]].value;
+  try {
+    long long n = std::stoll(val) - std::stoll(args[2]);
+    val = std::to_string(n);
+    std::string res = ":" + val + "\r\n\n";
+    send(client_fd, res.c_str(), res.length(), 0);
+  } catch (...) {
+    send(client_fd, "-ERR value is not an integer\r\n\n", 31, 0);
+  }
+}
+
+
 void cmd_info(int client_fd, const std::vector<std::string>& args, long long now) {
   std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
   info += "connected_clients: " + std::to_string(client_buffers.size()) + "\n";
@@ -173,6 +230,10 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     {"INFO",     cmd_info},
     {"PING",     cmd_ping},
     {"FLUSHALL", cmd_flushall},
+    {"INCR",     cmd_incr},
+    {"INCRBY",   cmd_incrby},    
+    {"DECR",     cmd_decr},
+    {"DECRBY",   cmd_decrby},
   };
 
   auto it = commands.find(args[0]);

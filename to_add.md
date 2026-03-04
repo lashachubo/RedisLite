@@ -8,10 +8,6 @@
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
 | `APPEND` | `APPEND key value` | `:new_length` | If key exists, append to its value. If not, create it. |
-| `INCR` | `INCR key` | `:new_value` | Increment integer value by 1. Error if not an integer. |
-| `DECR` | `DECR key` | `:new_value` | Decrement integer value by 1. |
-| `INCRBY` | `INCRBY key amount` | `:new_value` | Increment by a given number. |
-| `DECRBY` | `DECRBY key amount` | `:new_value` | Decrement by a given number. |
 | `MSET` | `MSET k1 v1 k2 v2 ...` | `+OK` | Set multiple keys at once. |
 | `MGET` | `MGET k1 k2 ...` | `*array` | Get multiple values at once. Returns `$-1` for missing keys. |
 | `SETNX` | `SETNX key value` | `:1` or `:0` | Set only if key does not exist. Useful for locks. |
