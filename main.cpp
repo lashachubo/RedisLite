@@ -11,6 +11,42 @@
 #define MAX_EVENTS 1024
 #define PORT 6379
 
+// Parses one command from buf (RESP or inline), fills args, erases consumed bytes.
+// Returns false if buf doesn't yet contain a complete command.
+bool parse_resp(std::string& buf, std::vector<std::string>& args) {
+  if (buf.empty()) return false;
+  if (buf[0] != '*') {
+    // inline fallback (telnet / plain text)
+    size_t pos = buf.find('\n');
+    if (pos == std::string::npos) return false;
+    std::string line = buf.substr(0, pos);
+    if (!line.empty() && line.back() == '\r') line.pop_back();
+    buf.erase(0, pos + 1);
+    args = split_command(line);
+    return !args.empty();
+  }
+  size_t pos = buf.find("\r\n");
+  if (pos == std::string::npos) return false;
+  int count;
+  try { count = std::stoi(buf.substr(1, pos - 1)); } catch (...) { return false; }
+  size_t offset = pos + 2;
+  std::vector<std::string> result;
+  for (int i = 0; i < count; i++) {
+    if (offset >= buf.size() || buf[offset] != '$') return false;
+    size_t end = buf.find("\r\n", offset);
+    if (end == std::string::npos) return false;
+    int len;
+    try { len = std::stoi(buf.substr(offset + 1, end - offset - 1)); } catch (...) { return false; }
+    offset = end + 2;
+    if (offset + (size_t)len + 2 > buf.size()) return false;
+    result.push_back(buf.substr(offset, len));
+    offset += len + 2;
+  }
+  buf.erase(0, offset);
+  args = result;
+  return true;
+}
+
 void set_nonblocking(int fd) {
   int flags = fcntl(fd, F_GETFL, 0);
   fcntl(fd, F_SETFL, flags | O_NONBLOCK);
@@ -79,17 +115,10 @@ int main() {
           // add bytes to clients buffer
           client_buffers[client_fd].append(buffer, bytes_received);
 
-          // check if full line
-          size_t pos;
-          while ((pos = client_buffers[client_fd].find('\n')) != std::string::npos) {
-            std::string full_command = client_buffers[client_fd].substr(0, pos);
-            if (!full_command.empty() && full_command.back() == '\r') {
-              full_command.pop_back();
-            }
-
-            std::vector<std::string> args = split_command(full_command);
+          std::vector<std::string> args;
+          while (parse_resp(client_buffers[client_fd], args)) {
             process_and_reply(client_fd, args);
-            client_buffers[client_fd].erase(0, pos + 1);
+            args.clear();
           }
         }
         else if (bytes_received <= 0) {

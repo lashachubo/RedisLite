@@ -23,11 +23,13 @@ void cmd_set(int client_fd, const std::vector<std::string>& args, long long now)
   if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
   Entry e;
   e.value = args[2];
-  e.expires_at = 0;
+  if (args.size() == 4 && args[3] == "EX") { send(client_fd, "-ERR no EX time given\r\n\n", 24, 0); return; }
   if (args.size() >= 5 && args[3] == "EX") {
-    e.expires_at = now + (std::stoll(args[4]) * 1000);
+    if (std::stoll(args[4])) { send(client_fd, "-ERR EX time must be more than 0\r\n\n", 35, 0); return; }
+    long long ex = std::stoll(args[4]);
+    e.expires_at = now + (ex * 1000);
   }
-  std::move(e);
+  g_database[args[1]] = std::move(e);
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
@@ -81,6 +83,7 @@ void cmd_lrange(int client_fd, const std::vector<std::string>& args, long long n
   if (args.size() < 4) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
   auto it = g_database.find(args[1]);
   if (it != g_database.end()) {
+    if (!it->second.is_list) { send(client_fd, "-WRONGTYPE that key is not a list\r\n\n", 69, 0); return; }
     auto& l = it->second.list;
     int n = (int)l.size();
     int start = std::stoi(args[2]);
