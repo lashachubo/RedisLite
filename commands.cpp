@@ -21,9 +21,9 @@ using Handler = std::function<void(int, const std::vector<std::string>&, long lo
 
 void cmd_set(int client_fd, const std::vector<std::string>& args, long long now) {
   if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  if (args.size() == 4 && args[3] == "EX") { send(client_fd, "-ERR no EX time given\r\n\n", 24, 0); return; }
   Entry e;
   e.value = args[2];
-  if (args.size() == 4 && args[3] == "EX") { send(client_fd, "-ERR no EX time given\r\n\n", 24, 0); return; }
   if (args.size() >= 5 && args[3] == "EX") {
     if (std::stoll(args[4]) <= 0) { send(client_fd, "-ERR EX time must be more than 0\r\n\n", 35, 0); return; }
     long long ex = std::stoll(args[4]);
@@ -195,6 +195,43 @@ void cmd_decrby(int client_fd, const std::vector<std::string>& args, long long n
   }
 }
 
+void cmd_append(int client_fd, const std::vector<std::string>& args, long long now) {
+  if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  auto& val = g_database[args[1]].value;
+  std::string append_val;
+  for (size_t i {2}; i < args.size(); i++) {
+    if (i > 2) append_val += " ";
+    append_val += args[i];
+  }
+  if (append_val.size() >= 2 && append_val.front() == '"' && append_val.back() == '"'){
+    append_val = append_val.substr(1, append_val.size() - 2);
+  }
+  val += append_val;
+  std::string res = ":" + std::to_string(val.length()) + "\r\n\n";
+  send(client_fd, res.c_str(), res.length(), 0);
+}
+
+void cmd_hset(int client_fd, const std::vector<std::string>& args, long long now) {
+  if (args.size() < 4) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  auto& h = g_database[args[1]].hash;
+  int added = 0;
+  for (size_t i = 2; i < args.size(); i += 2) {
+    if (!h.count(args[i])) added++;
+    h[args[i]] = args[i + 1];
+  }
+  std::string res = ":" + std::to_string(added) + "\r\n\n";
+  send(client_fd, res.c_str(), res.length(), 0);
+}
+
+void cmd_hget(int client_fd, const std::vector<std::string>& args, long long now) {
+  if(args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  auto it = g_database.find(args[1]);
+  if(it == g_database.end()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
+  auto fit = it->second.hash.find(args[2]);
+  if (fit == it->second.hash.end()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
+  std::string response = "$" + std::to_string(fit->second.length()) + "\r\n" + fit->second + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
 
 void cmd_info(int client_fd, const std::vector<std::string>& args, long long now) {
   std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
@@ -234,6 +271,9 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     {"INCRBY",   cmd_incrby},    
     {"DECR",     cmd_decr},
     {"DECRBY",   cmd_decrby},
+    {"APPEND",   cmd_append},
+    {"HSET",     cmd_hset},
+    {"HGET",     cmd_hget},
   };
 
   auto it = commands.find(args[0]);

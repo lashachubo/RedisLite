@@ -7,7 +7,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `APPEND` | `APPEND key value` | `:new_length` | If key exists, append to its value. If not, create it. |
 | `MSET` | `MSET k1 v1 k2 v2 ...` | `+OK` | Set multiple keys at once. |
 | `MGET` | `MGET k1 k2 ...` | `*array` | Get multiple values at once. Returns `$-1` for missing keys. |
 | `SETNX` | `SETNX key value` | `:1` or `:0` | Set only if key does not exist. Useful for locks. |
@@ -47,8 +46,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `HSET` | `HSET key field value` | `:1` | Set a field in a hash. |
-| `HGET` | `HGET key field` | `$value` | Get a field from a hash. |
 | `HMSET` | `HMSET key f1 v1 f2 v2` | `+OK` | Set multiple fields at once. |
 | `HMGET` | `HMGET key f1 f2` | `*array` | Get multiple fields at once. |
 | `HGETALL` | `HGETALL key` | `*array` | Get all fields and values. |

@@ -59,7 +59,9 @@ nc localhost 6379
 | `INCRBY` | `INCRBY [key] [ammount]` | Increase value by x |
 | `DECR` | `DECR [key]` | Decrease value by 1 |
 | `DECRBY` | `DECRBY [key] [ammount]` | Decrease value by x |
-
+| `APPEND` | `APPEND [key] [value]` | Append a value to a key |
+| `HSET` | `HSET [key] [field] [value]` | Set a key value pair in hash |
+| `HGET` | `HGET [key] [field]` | Get a value from hash |
 
 
 ## Project Structure
