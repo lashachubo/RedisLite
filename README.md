@@ -48,7 +48,9 @@ nc localhost 6379
 | `FLUSHALL` | `FLUSHALL` | Clear the entire database |
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
+| `MSET` | `MSET [key1] [value1] [key2] [value2]` | Set multiple key value pairs |
 | `GET` | `GET [key]` | Returns the value for the key |
+| `MGET` | `MGET [key1] [key2]` | Get values of multiple keys |
 | `DEL` | `DEL [key]` | Delete existing key |
 | `LPUSH` | `LPUSH [key] [value]` | Inserts a value at the head of the list. Returns the list length |
 | `RPUSH` | `RPUSH [key] [value]` | Insert value at the end of the list |

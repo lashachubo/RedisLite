@@ -211,6 +211,37 @@ void cmd_append(int client_fd, const std::vector<std::string>& args, long long n
   send(client_fd, res.c_str(), res.length(), 0);
 }
 
+void cmd_mset(int client_fd, const std::vector<std::string>& args, long long now) {
+  if(args.size() < 3){ send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  for(size_t i{1}; i < args.size(); i+=2){
+    Entry e;
+    e.value = args[i+1];
+    g_database[args[i]] = std::move(e);
+  }
+  send(client_fd, "+OK\r\n\n", 6, 0);
+}
+
+void cmd_mget(int client_fd, const std::vector<std::string>& args, long long now) {
+  if(args.size() < 2){ send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  for(size_t i{1}; i < args.size(); i++){
+    auto it = g_database.find(args[i]);
+    if (it != g_database.end()) {
+    Entry& e = it->second;
+    if (e.expires_at != 0 && now > e.expires_at) {
+      g_database.erase(it);
+      send(client_fd, "$-1\r\n\n", 6, 0);
+    } else {
+      std::string response = "$" + std::to_string(e.value.length()) + "\r\n" + e.value + "\r\n\n";
+      send(client_fd, response.c_str(), response.length(), 0);
+    }
+  } else {
+    send(client_fd, "$-1\r\n\n", 6, 0);
+  }
+  }
+}
+
+// hash commands
+
 void cmd_hset(int client_fd, const std::vector<std::string>& args, long long now) {
   if (args.size() < 4) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
   auto& h = g_database[args[1]].hash;
@@ -232,6 +263,8 @@ void cmd_hget(int client_fd, const std::vector<std::string>& args, long long now
   std::string response = "$" + std::to_string(fit->second.length()) + "\r\n" + fit->second + "\r\n\n";
   send(client_fd, response.c_str(), response.length(), 0);
 }
+
+// server info 
 
 void cmd_info(int client_fd, const std::vector<std::string>& args, long long now) {
   std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
@@ -274,6 +307,8 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     {"APPEND",   cmd_append},
     {"HSET",     cmd_hset},
     {"HGET",     cmd_hget},
+    {"MSET",     cmd_mset},
+    {"MGET",     cmd_mget},
   };
 
   auto it = commands.find(args[0]);

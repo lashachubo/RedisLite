@@ -7,8 +7,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `MSET` | `MSET k1 v1 k2 v2 ...` | `+OK` | Set multiple keys at once. |
-| `MGET` | `MGET k1 k2 ...` | `*array` | Get multiple values at once. Returns `$-1` for missing keys. |
 | `SETNX` | `SETNX key value` | `:1` or `:0` | Set only if key does not exist. Useful for locks. |
 | `STRLEN` | `STRLEN key` | `:length` | Returns the length of the string stored at key. |
 | `GETSET` | `GETSET key value` | `$old_value` | Sets a new value and returns the old one atomically. |
