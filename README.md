@@ -48,6 +48,7 @@ nc localhost 6379
 | `FLUSHALL` | `FLUSHALL` | Clear the entire database |
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
+| `PERSIST` | `PERSIST [key]` | Remove the expiration from a key |
 | `MSET` | `MSET [key1] [value1] [key2] [value2]` | Set multiple key value pairs |
 | `GET` | `GET [key]` | Returns the value for the key |
 | `MGET` | `MGET [key1] [key2]` | Get values of multiple keys |
@@ -64,7 +65,7 @@ nc localhost 6379
 | `APPEND` | `APPEND [key] [value]` | Append a value to a key |
 | `HSET` | `HSET [key] [field] [value]` | Set a key value pair in hash |
 | `HGET` | `HGET [key] [field]` | Get a value from hash |
-
+| `EXISTS` | `EXISTS [key]` | Check if key exists |
 
 ## Project Structure
 

@@ -17,11 +17,9 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `EXISTS` | `EXISTS key` | `:1` or `:0` | Check if a key exists. |
 | `KEYS` | `KEYS pattern` | `*array` | List all keys matching a pattern. `*` = all keys. Slow on large DBs. |
 | `TYPE` | `TYPE key` | `+string` or `+list` etc. | Returns the type of value stored at key. |
 | `TTL` | `TTL key` | `:seconds` | How many seconds until the key expires. `-1` = no expiry, `-2` = doesn't exist. |
-| `PERSIST` | `PERSIST key` | `:1` or `:0` | Remove the expiration from a key, making it permanent. |
 | `EXPIRE` | `EXPIRE key seconds` | `:1` or `:0` | Set an expiration on an existing key. |
 | `RANDOMKEY` | `RANDOMKEY` | `$key` | Returns a random key from the database. |
 

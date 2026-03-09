@@ -240,6 +240,22 @@ void cmd_mget(int client_fd, const std::vector<std::string>& args, long long now
   }
 }
 
+void cmd_exists(int client_fd, const std::vector<std::string>& args, long long now){
+  if(args.size() < 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  for(size_t i{1}; i < args.size(); i++){
+    if(g_database.count(args[i])){ send(client_fd, "$1\r\n\n", 5, 0); continue; }
+    send(client_fd, "$-1\r\n\n", 6, 0);
+  }
+}
+
+void cmd_persist(int client_fd, const std::vector<std::string>& args, long long now){
+  if(args.size() < 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return;}
+  if(g_database.count(args[1]) == 0) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return;}
+  auto& entery = g_database[args[1]];
+  entery.expires_at = {0};
+  send(client_fd, "+OK\r\n\n", 6, 0);
+}
+
 // hash commands
 
 void cmd_hset(int client_fd, const std::vector<std::string>& args, long long now) {
@@ -309,6 +325,8 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     {"HGET",     cmd_hget},
     {"MSET",     cmd_mset},
     {"MGET",     cmd_mget},
+    {"EXISTS",   cmd_exists},
+    {"PERSIST",  cmd_persist}
   };
 
   auto it = commands.find(args[0]);
