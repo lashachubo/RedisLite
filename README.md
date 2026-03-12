@@ -48,7 +48,9 @@ nc localhost 6379
 | `FLUSHALL` | `FLUSHALL` | Clear the entire database |
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
+| `EX` | `EX [key] [seconds]` | Add expiration to a key |
 | `PERSIST` | `PERSIST [key]` | Remove the expiration from a key |
+| `RENAME` | `RENAME [key] [new_key]` | Rename existing keys |
 | `MSET` | `MSET [key1] [value1] [key2] [value2]` | Set multiple key value pairs |
 | `GET` | `GET [key]` | Returns the value for the key |
 | `MGET` | `MGET [key1] [key2]` | Get values of multiple keys |
@@ -57,7 +59,7 @@ nc localhost 6379
 | `RPUSH` | `RPUSH [key] [value]` | Insert value at the end of the list |
 | `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
 | `LTRIM` | `LTRIM [start_index] [end_index]` | Trim a list |
-| `RENAME` | `RENAME [key] [new_key]` | Rename existing keys |
+| `LLEN` | `LLEN [key]` | Get the length of a list |
 | `INCR` | `INCR [key]` | Increase value by 1 |
 | `INCRBY` | `INCRBY [key] [ammount]` | Increase value by x |
 | `DECR` | `DECR [key]` | Decrease value by 1 |

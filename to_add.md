@@ -20,7 +20,6 @@
 | `KEYS` | `KEYS pattern` | `*array` | List all keys matching a pattern. `*` = all keys. Slow on large DBs. |
 | `TYPE` | `TYPE key` | `+string` or `+list` etc. | Returns the type of value stored at key. |
 | `TTL` | `TTL key` | `:seconds` | How many seconds until the key expires. `-1` = no expiry, `-2` = doesn't exist. |
-| `EXPIRE` | `EXPIRE key seconds` | `:1` or `:0` | Set an expiration on an existing key. |
 | `RANDOMKEY` | `RANDOMKEY` | `$key` | Returns a random key from the database. |
 
 ---
@@ -29,7 +28,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `LLEN` | `LLEN key` | `:length` | Returns the length of a list. |
 | `LINDEX` | `LINDEX key index` | `$value` | Get element at a specific index. |
 | `LSET` | `LSET key index value` | `+OK` | Set element at a specific index. |
 | `LPOP` | `LPOP key` | `$value` | Remove and return the first element. |

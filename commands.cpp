@@ -256,6 +256,23 @@ void cmd_persist(int client_fd, const std::vector<std::string>& args, long long 
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
+void cmd_expire(int client_fd, const std::vector<std::string>& args, long long now){
+  if(args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return;}
+  if(!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return;}
+  if(g_database[args[1]].is_list) { send(client_fd, "-WRONGTYPE this key holds a list\r\n\n", 35, 0); return;}
+  g_database[args[1]].expires_at = now + (std::stoll(args[2]) * 1000);
+  send(client_fd, "+OK\r\n\n", 6, 0);
+}
+
+void cmd_llen(int client_fd, const std::vector<std::string>& args, long long now){
+  if(args.size() < 2){ send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return;}
+  if(!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return;}
+  if(!g_database[args[1]].is_list) { send(client_fd, "-WRONGTYPE that key does not hold a list\r\n\n", 43, 0); return;}
+
+  std::string response = "$" + std::to_string(g_database[args[1]].list.size()) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
 // hash commands
 
 void cmd_hset(int client_fd, const std::vector<std::string>& args, long long now) {
@@ -326,7 +343,9 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     {"MSET",     cmd_mset},
     {"MGET",     cmd_mget},
     {"EXISTS",   cmd_exists},
-    {"PERSIST",  cmd_persist}
+    {"PERSIST",  cmd_persist},
+    {"EXPIRE",   cmd_expire},
+    {"LLEN",     cmd_llen}
   };
 
   auto it = commands.find(args[0]);
