@@ -20,7 +20,7 @@ std::vector<std::string> split_command(std::string cmd) {
 using Handler = std::function<void(int, const std::vector<std::string>&, long long)>;
 
 void cmd_set(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  ARGS_CHECK(3);
   if (args.size() == 4 && args[3] == "EX") { send(client_fd, "-ERR no EX time given\r\n\n", 24, 0); return; }
   Entry e;
   e.value = args[2];
@@ -34,7 +34,7 @@ void cmd_set(int client_fd, const std::vector<std::string>& args, long long now)
 }
 
 void cmd_get(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+  ARGS_CHECK(2);
   auto it = g_database.find(args[1]);
   if (it != g_database.end()) {
     Entry& e = it->second;
@@ -50,15 +50,15 @@ void cmd_get(int client_fd, const std::vector<std::string>& args, long long now)
   }
 }
 
-void cmd_del(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_del(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(2);
   size_t deleted_count = g_database.erase(args[1]);
   std::string response = ":" + std::to_string(deleted_count) + "\r\n\n";
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
-void cmd_lpush(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_lpush(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
   auto& entry = g_database[args[1]];
   entry.is_list = true;
   for (size_t i = 2; i < args.size(); i++) {
@@ -68,8 +68,8 @@ void cmd_lpush(int client_fd, const std::vector<std::string>& args, long long no
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
-void cmd_rpush(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n", 32, 0); return; }
+void cmd_rpush(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
   auto& entry = g_database[args[1]];
   entry.is_list = true;
   for (size_t i = 2; i < args.size(); i++) {
@@ -79,11 +79,11 @@ void cmd_rpush(int client_fd, const std::vector<std::string>& args, long long no
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
-void cmd_lrange(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 4) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_lrange(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(4);
   auto it = g_database.find(args[1]);
   if (it != g_database.end()) {
-    if (!it->second.is_list) { send(client_fd, "-WRONGTYPE that key is not a list\r\n\n", 69, 0); return; }
+    if (!it->second.is_list) { send(client_fd, "-WRONGTYPE that key does not hold a list\r\n\n", 43, 0); return; }
     auto& l = it->second.list;
     int n = (int)l.size();
     int start = std::stoi(args[2]);
@@ -103,12 +103,12 @@ void cmd_lrange(int client_fd, const std::vector<std::string>& args, long long n
   }
 }
 
-void cmd_ltrim(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 4) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_ltrim(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(4);
+  KEY_CHECK(args[1]);
+  LIST_CHECK(args[1]);
   auto it = g_database.find(args[1]);
-  if (it == g_database.end()) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; }
   Entry& e = it->second;
-  if (!e.is_list) { send(client_fd, "-WRONGTYPE that key does not hold a list\r\n\n", 43, 0); return; }
   auto& l = e.list;
   int n = l.size();
   int start = std::stoi(args[2]);
@@ -130,18 +130,18 @@ void cmd_ltrim(int client_fd, const std::vector<std::string>& args, long long no
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_rename(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_rename(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
   auto it = g_database.find(args[1]);
-  if (it == g_database.end()) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; }
   g_database[args[2]] = std::move(it->second);
   g_database.erase(it);
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_incr(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() != 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
-  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+void cmd_incr(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
   auto& val = g_database[args[1]].value;
   try {
     long long n = std::stoll(val) + 1;
@@ -153,9 +153,9 @@ void cmd_incr(int client_fd, const std::vector<std::string>& args, long long now
   }
 }
 
-void cmd_incrby(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() != 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
-  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+void cmd_incrby(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
   auto& val = g_database[args[1]].value;
   try {
     long long n = std::stoll(val) + std::stoll(args[2]);
@@ -167,9 +167,9 @@ void cmd_incrby(int client_fd, const std::vector<std::string>& args, long long n
   }
 }
 
-void cmd_decr(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() != 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
-  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+void cmd_decr(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
   auto& val = g_database[args[1]].value;
   try {
     long long n = std::stoll(val) - 1;
@@ -181,9 +181,9 @@ void cmd_decr(int client_fd, const std::vector<std::string>& args, long long now
   }
 }
 
-void cmd_decrby(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() != 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
-  if (!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return; };
+void cmd_decrby(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
   auto& val = g_database[args[1]].value;
   try {
     long long n = std::stoll(val) - std::stoll(args[2]);
@@ -195,8 +195,8 @@ void cmd_decrby(int client_fd, const std::vector<std::string>& args, long long n
   }
 }
 
-void cmd_append(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_append(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
   auto& val = g_database[args[1]].value;
   std::string append_val;
   for (size_t i {2}; i < args.size(); i++) {
@@ -211,8 +211,8 @@ void cmd_append(int client_fd, const std::vector<std::string>& args, long long n
   send(client_fd, res.c_str(), res.length(), 0);
 }
 
-void cmd_mset(int client_fd, const std::vector<std::string>& args, long long now) {
-  if(args.size() < 3){ send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_mset(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
   for(size_t i{1}; i < args.size(); i+=2){
     Entry e;
     e.value = args[i+1];
@@ -240,34 +240,34 @@ void cmd_mget(int client_fd, const std::vector<std::string>& args, long long now
   }
 }
 
-void cmd_exists(int client_fd, const std::vector<std::string>& args, long long now){
-  if(args.size() < 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_exists(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
   for(size_t i{1}; i < args.size(); i++){
     if(g_database.count(args[i])){ send(client_fd, "$1\r\n\n", 5, 0); continue; }
     send(client_fd, "$-1\r\n\n", 6, 0);
   }
 }
 
-void cmd_persist(int client_fd, const std::vector<std::string>& args, long long now){
-  if(args.size() < 2) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return;}
-  if(g_database.count(args[1]) == 0) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return;}
+void cmd_persist(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
   auto& entery = g_database[args[1]];
   entery.expires_at = {0};
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
 void cmd_expire(int client_fd, const std::vector<std::string>& args, long long now){
-  if(args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return;}
-  if(!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return;}
+  ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
   if(g_database[args[1]].is_list) { send(client_fd, "-WRONGTYPE this key holds a list\r\n\n", 35, 0); return;}
   g_database[args[1]].expires_at = now + (std::stoll(args[2]) * 1000);
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_llen(int client_fd, const std::vector<std::string>& args, long long now){
-  if(args.size() < 2){ send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return;}
-  if(!g_database.count(args[1])) { send(client_fd, "-ERR no such key\r\n\n", 19, 0); return;}
-  if(!g_database[args[1]].is_list) { send(client_fd, "-WRONGTYPE that key does not hold a list\r\n\n", 43, 0); return;}
+void cmd_llen(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  LIST_CHECK(args[1]);
 
   std::string response = "$" + std::to_string(g_database[args[1]].list.size()) + "\r\n\n";
   send(client_fd, response.c_str(), response.length(), 0);
@@ -275,8 +275,8 @@ void cmd_llen(int client_fd, const std::vector<std::string>& args, long long now
 
 // hash commands
 
-void cmd_hset(int client_fd, const std::vector<std::string>& args, long long now) {
-  if (args.size() < 4) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_hset(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(4);
   auto& h = g_database[args[1]].hash;
   int added = 0;
   for (size_t i = 2; i < args.size(); i += 2) {
@@ -287,8 +287,8 @@ void cmd_hset(int client_fd, const std::vector<std::string>& args, long long now
   send(client_fd, res.c_str(), res.length(), 0);
 }
 
-void cmd_hget(int client_fd, const std::vector<std::string>& args, long long now) {
-  if(args.size() < 3) { send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_hget(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(3);
   auto it = g_database.find(args[1]);
   if(it == g_database.end()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
   auto fit = it->second.hash.find(args[2]);
@@ -299,18 +299,18 @@ void cmd_hget(int client_fd, const std::vector<std::string>& args, long long now
 
 // server info 
 
-void cmd_info(int client_fd, const std::vector<std::string>& args, long long now) {
+void cmd_info(int client_fd, const std::vector<std::string>& args) {
   std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
   info += "connected_clients: " + std::to_string(client_buffers.size()) + "\n";
   std::string res = "$" + std::to_string(info.length()) + "\r\n" + info + "\r\n";
   send(client_fd, res.c_str(), res.length(), 0);
 }
 
-void cmd_ping(int client_fd, const std::vector<std::string>& args, long long now) {
+void cmd_ping(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, "+PONG\r\n", 7, 0);
 }
 
-void cmd_flushall(int client_fd, const std::vector<std::string>& args, long long now) {
+void cmd_flushall(int client_fd, const std::vector<std::string>& args) {
   g_database.clear();
   send(client_fd, "+OK\r\n", 5, 0);
 }
