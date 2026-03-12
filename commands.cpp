@@ -17,9 +17,14 @@ std::vector<std::string> split_command(std::string cmd) {
   return parts;
 }
 
-using Handler = std::function<void(int, const std::vector<std::string>&, long long)>;
+using Handler = std::function<void(int, const std::vector<std::string>&)>;
 
-void cmd_set(int client_fd, const std::vector<std::string>& args, long long now) {
+static long long now_ms() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+    std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+void cmd_set(int client_fd, const std::vector<std::string>& args) {
   ARGS_CHECK(3);
   if (args.size() == 4 && args[3] == "EX") { send(client_fd, "-ERR no EX time given\r\n\n", 24, 0); return; }
   Entry e;
@@ -27,18 +32,18 @@ void cmd_set(int client_fd, const std::vector<std::string>& args, long long now)
   if (args.size() >= 5 && args[3] == "EX") {
     if (std::stoll(args[4]) <= 0) { send(client_fd, "-ERR EX time must be more than 0\r\n\n", 35, 0); return; }
     long long ex = std::stoll(args[4]);
-    e.expires_at = now + (ex * 1000);
+    e.expires_at = now_ms() + (ex * 1000);
   }
   g_database[args[1]] = std::move(e);
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_get(int client_fd, const std::vector<std::string>& args, long long now) {
+void cmd_get(int client_fd, const std::vector<std::string>& args) {
   ARGS_CHECK(2);
   auto it = g_database.find(args[1]);
   if (it != g_database.end()) {
     Entry& e = it->second;
-    if (e.expires_at != 0 && now > e.expires_at) {
+    if (e.expires_at != 0 && now_ms() > e.expires_at) {
       g_database.erase(it);
       send(client_fd, "$-1\r\n\n", 6, 0);
     } else {
@@ -221,13 +226,13 @@ void cmd_mset(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_mget(int client_fd, const std::vector<std::string>& args, long long now) {
-  if(args.size() < 2){ send(client_fd, "-ERR wrong number of arguments\r\n\n", 33, 0); return; }
+void cmd_mget(int client_fd, const std::vector<std::string>& args) {
+  ARGS_CHECK(2);
   for(size_t i{1}; i < args.size(); i++){
     auto it = g_database.find(args[i]);
     if (it != g_database.end()) {
     Entry& e = it->second;
-    if (e.expires_at != 0 && now > e.expires_at) {
+    if (e.expires_at != 0 && now_ms() > e.expires_at) {
       g_database.erase(it);
       send(client_fd, "$-1\r\n\n", 6, 0);
     } else {
@@ -256,11 +261,11 @@ void cmd_persist(int client_fd, const std::vector<std::string>& args){
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_expire(int client_fd, const std::vector<std::string>& args, long long now){
+void cmd_expire(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   KEY_CHECK(args[1]);
   if(g_database[args[1]].is_list) { send(client_fd, "-WRONGTYPE this key holds a list\r\n\n", 35, 0); return;}
-  g_database[args[1]].expires_at = now + (std::stoll(args[2]) * 1000);
+  g_database[args[1]].expires_at = now_ms() + (std::stoll(args[2]) * 1000);
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
@@ -318,9 +323,6 @@ void cmd_flushall(int client_fd, const std::vector<std::string>& args) {
 void process_and_reply(int client_fd, const std::vector<std::string>& args) {
   if (args.empty()) return;
 
-  long long now = std::chrono::duration_cast<std::chrono::milliseconds>(
-    std::chrono::system_clock::now().time_since_epoch()).count();
-
   static std::unordered_map<std::string, Handler> commands = {
     {"SET",      cmd_set},
     {"GET",      cmd_get},
@@ -350,7 +352,7 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
 
   auto it = commands.find(args[0]);
   if (it != commands.end()) {
-    it->second(client_fd, args, now);
+    it->second(client_fd, args);
   } else {
     send(client_fd, "-ERR unknown command\r\n\n", 23, 0);
   }
