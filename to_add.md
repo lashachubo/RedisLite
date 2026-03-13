@@ -8,7 +8,6 @@
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
 | `SETNX` | `SETNX key value` | `:1` or `:0` | Set only if key does not exist. Useful for locks. |
-| `STRLEN` | `STRLEN key` | `:length` | Returns the length of the string stored at key. |
 | `GETSET` | `GETSET key value` | `$old_value` | Sets a new value and returns the old one atomically. |
 
 ---

@@ -51,6 +51,7 @@ nc localhost 6379
 | `EX` | `EX [key] [seconds]` | Add expiration to a key |
 | `PERSIST` | `PERSIST [key]` | Remove the expiration from a key |
 | `RENAME` | `RENAME [key] [new_key]` | Rename existing keys |
+| `STRLEN` | `STRLEN [key]` | Returns the lenght of the string |
 | `MSET` | `MSET [key1] [value1] [key2] [value2]` | Set multiple key value pairs |
 | `GET` | `GET [key]` | Returns the value for the key |
 | `MGET` | `MGET [key1] [key2]` | Get values of multiple keys |

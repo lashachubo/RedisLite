@@ -24,7 +24,7 @@ static long long now_ms() {
     std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-void cmd_set(int client_fd, const std::vector<std::string>& args) {
+void cmd_set(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   if (args.size() == 4 && args[3] == "EX") { send(client_fd, "-ERR no EX time given\r\n\n", 24, 0); return; }
   Entry e;
@@ -38,7 +38,7 @@ void cmd_set(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_get(int client_fd, const std::vector<std::string>& args) {
+void cmd_get(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(2);
   auto it = g_database.find(args[1]);
   if (it != g_database.end()) {
@@ -55,14 +55,14 @@ void cmd_get(int client_fd, const std::vector<std::string>& args) {
   }
 }
 
-void cmd_del(int client_fd, const std::vector<std::string>& args) {
+void cmd_del(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(2);
   size_t deleted_count = g_database.erase(args[1]);
   std::string response = ":" + std::to_string(deleted_count) + "\r\n\n";
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
-void cmd_lpush(int client_fd, const std::vector<std::string>& args) {
+void cmd_lpush(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   auto& entry = g_database[args[1]];
   entry.is_list = true;
@@ -73,7 +73,7 @@ void cmd_lpush(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
-void cmd_rpush(int client_fd, const std::vector<std::string>& args) {
+void cmd_rpush(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   auto& entry = g_database[args[1]];
   entry.is_list = true;
@@ -84,7 +84,7 @@ void cmd_rpush(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
-void cmd_lrange(int client_fd, const std::vector<std::string>& args) {
+void cmd_lrange(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(4);
   auto it = g_database.find(args[1]);
   if (it != g_database.end()) {
@@ -108,7 +108,7 @@ void cmd_lrange(int client_fd, const std::vector<std::string>& args) {
   }
 }
 
-void cmd_ltrim(int client_fd, const std::vector<std::string>& args) {
+void cmd_ltrim(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(4);
   KEY_CHECK(args[1]);
   LIST_CHECK(args[1]);
@@ -135,7 +135,7 @@ void cmd_ltrim(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_rename(int client_fd, const std::vector<std::string>& args) {
+void cmd_rename(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   KEY_CHECK(args[1]);
   auto it = g_database.find(args[1]);
@@ -144,7 +144,7 @@ void cmd_rename(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_incr(int client_fd, const std::vector<std::string>& args) {
+void cmd_incr(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(2);
   KEY_CHECK(args[1]);
   auto& val = g_database[args[1]].value;
@@ -158,7 +158,7 @@ void cmd_incr(int client_fd, const std::vector<std::string>& args) {
   }
 }
 
-void cmd_incrby(int client_fd, const std::vector<std::string>& args) {
+void cmd_incrby(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   KEY_CHECK(args[1]);
   auto& val = g_database[args[1]].value;
@@ -186,7 +186,7 @@ void cmd_decr(int client_fd, const std::vector<std::string>& args) {
   }
 }
 
-void cmd_decrby(int client_fd, const std::vector<std::string>& args) {
+void cmd_decrby(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   KEY_CHECK(args[1]);
   auto& val = g_database[args[1]].value;
@@ -200,7 +200,7 @@ void cmd_decrby(int client_fd, const std::vector<std::string>& args) {
   }
 }
 
-void cmd_append(int client_fd, const std::vector<std::string>& args) {
+void cmd_append(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   auto& val = g_database[args[1]].value;
   std::string append_val;
@@ -216,7 +216,7 @@ void cmd_append(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, res.c_str(), res.length(), 0);
 }
 
-void cmd_mset(int client_fd, const std::vector<std::string>& args) {
+void cmd_mset(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   for(size_t i{1}; i < args.size(); i+=2){
     Entry e;
@@ -226,7 +226,7 @@ void cmd_mset(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void cmd_mget(int client_fd, const std::vector<std::string>& args) {
+void cmd_mget(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(2);
   for(size_t i{1}; i < args.size(); i++){
     auto it = g_database.find(args[i]);
@@ -264,7 +264,8 @@ void cmd_persist(int client_fd, const std::vector<std::string>& args){
 void cmd_expire(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   KEY_CHECK(args[1]);
-  if(g_database[args[1]].is_list) { send(client_fd, "-WRONGTYPE this key holds a list\r\n\n", 35, 0); return;}
+  NOT_LIST(args[1]);
+
   g_database[args[1]].expires_at = now_ms() + (std::stoll(args[2]) * 1000);
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
@@ -278,9 +279,18 @@ void cmd_llen(int client_fd, const std::vector<std::string>& args){
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
+void cmd_strlen(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  NOT_LIST(args[1]);
+
+  std::string response = "$" + std::to_string(g_database[args[1]].value.size()) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
 // hash commands
 
-void cmd_hset(int client_fd, const std::vector<std::string>& args) {
+void cmd_hset(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(4);
   auto& h = g_database[args[1]].hash;
   int added = 0;
@@ -292,7 +302,7 @@ void cmd_hset(int client_fd, const std::vector<std::string>& args) {
   send(client_fd, res.c_str(), res.length(), 0);
 }
 
-void cmd_hget(int client_fd, const std::vector<std::string>& args) {
+void cmd_hget(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   auto it = g_database.find(args[1]);
   if(it == g_database.end()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
@@ -304,23 +314,23 @@ void cmd_hget(int client_fd, const std::vector<std::string>& args) {
 
 // server info 
 
-void cmd_info(int client_fd, const std::vector<std::string>& args) {
+void cmd_info(int client_fd, const std::vector<std::string>& args){
   std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
   info += "connected_clients: " + std::to_string(client_buffers.size()) + "\n";
   std::string res = "$" + std::to_string(info.length()) + "\r\n" + info + "\r\n";
   send(client_fd, res.c_str(), res.length(), 0);
 }
 
-void cmd_ping(int client_fd, const std::vector<std::string>& args) {
+void cmd_ping(int client_fd, const std::vector<std::string>& args){
   send(client_fd, "+PONG\r\n", 7, 0);
 }
 
-void cmd_flushall(int client_fd, const std::vector<std::string>& args) {
+void cmd_flushall(int client_fd, const std::vector<std::string>& args){
   g_database.clear();
   send(client_fd, "+OK\r\n", 5, 0);
 }
 
-void process_and_reply(int client_fd, const std::vector<std::string>& args) {
+void process_and_reply(int client_fd, const std::vector<std::string>& args){
   if (args.empty()) return;
 
   static std::unordered_map<std::string, Handler> commands = {
@@ -347,7 +357,8 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args) {
     {"EXISTS",   cmd_exists},
     {"PERSIST",  cmd_persist},
     {"EXPIRE",   cmd_expire},
-    {"LLEN",     cmd_llen}
+    {"LLEN",     cmd_llen},
+    {"STRLEN",   cmd_strlen}
   };
 
   auto it = commands.find(args[0]);
