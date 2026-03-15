@@ -294,8 +294,9 @@ void cmd_lindex(int client_fd, const std::vector<std::string>& args){
   LIST_CHECK(args[1]);
   
   auto& list = g_database[args[1]].list;
-  size_t index = std::stoi(args[2]);
-  if (index >= list.size()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
+  int index = std::stoi(args[2]);
+  if (index < 0) index = (int)list.size() + index;
+  if (index < 0 || index >= (int)list.size()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
   std::string response = "$" + std::to_string(list[index].length()) + "\r\n" + list[index] + "\r\n\n";
   send(client_fd, response.c_str(), response.length(), 0);
 }
