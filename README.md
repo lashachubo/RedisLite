@@ -47,6 +47,7 @@ nc localhost 6379
 | `INFO` | `INFO` | Get total key ammounts and clients connected |
 | `FLUSHALL` | `FLUSHALL` | Clear the entire database |
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
+| `DBSIZE` | `DBSIZE` | Returns the number of keys in the database |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
 | `EX` | `EX [key] [seconds]` | Add expiration to a key |
 | `PERSIST` | `PERSIST [key]` | Remove the expiration from a key |
@@ -59,6 +60,7 @@ nc localhost 6379
 | `LPUSH` | `LPUSH [key] [value]` | Inserts a value at the head of the list. Returns the list length |
 | `RPUSH` | `RPUSH [key] [value]` | Insert value at the end of the list |
 | `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
+| `LINDEX` | `LINDEX [key] [index]` | Get element at a specific index |
 | `LTRIM` | `LTRIM [start_index] [end_index]` | Trim a list |
 | `LLEN` | `LLEN [key]` | Get the length of a list |
 | `INCR` | `INCR [key]` | Increase value by 1 |

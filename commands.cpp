@@ -288,6 +288,18 @@ void cmd_strlen(int client_fd, const std::vector<std::string>& args){
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
+void cmd_lindex(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
+  LIST_CHECK(args[1]);
+  
+  auto& list = g_database[args[1]].list;
+  size_t index = std::stoi(args[2]);
+  if (index >= list.size()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
+  std::string response = "$" + std::to_string(list[index].length()) + "\r\n" + list[index] + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
 // hash commands
 
 void cmd_hset(int client_fd, const std::vector<std::string>& args){
@@ -298,8 +310,8 @@ void cmd_hset(int client_fd, const std::vector<std::string>& args){
     if (!h.count(args[i])) added++;
     h[args[i]] = args[i + 1];
   }
-  std::string res = ":" + std::to_string(added) + "\r\n\n";
-  send(client_fd, res.c_str(), res.length(), 0);
+  std::string response = ":" + std::to_string(added) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
 }
 
 void cmd_hget(int client_fd, const std::vector<std::string>& args){
@@ -317,17 +329,22 @@ void cmd_hget(int client_fd, const std::vector<std::string>& args){
 void cmd_info(int client_fd, const std::vector<std::string>& args){
   std::string info = "total_keys: " + std::to_string(g_database.size()) + "\n";
   info += "connected_clients: " + std::to_string(client_buffers.size()) + "\n";
-  std::string res = "$" + std::to_string(info.length()) + "\r\n" + info + "\r\n";
-  send(client_fd, res.c_str(), res.length(), 0);
+  std::string response = "$" + std::to_string(info.length()) + "\r\n" + info + "\r\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
+void cmd_dbsize(int client_fd, const std::vector<std::string>& args){
+  std::string response = ":" + std::to_string(g_database.size()) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
 }
 
 void cmd_ping(int client_fd, const std::vector<std::string>& args){
-  send(client_fd, "+PONG\r\n", 7, 0);
+  send(client_fd, "+PONG\r\n\n", 8, 0);
 }
 
 void cmd_flushall(int client_fd, const std::vector<std::string>& args){
   g_database.clear();
-  send(client_fd, "+OK\r\n", 5, 0);
+  send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){
@@ -358,7 +375,9 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args){
     {"PERSIST",  cmd_persist},
     {"EXPIRE",   cmd_expire},
     {"LLEN",     cmd_llen},
-    {"STRLEN",   cmd_strlen}
+    {"STRLEN",   cmd_strlen},
+    {"DBSIZE",   cmd_dbsize},
+    {"LINDEX",   cmd_lindex}
   };
 
   auto it = commands.find(args[0]);

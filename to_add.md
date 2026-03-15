@@ -27,7 +27,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `LINDEX` | `LINDEX key index` | `$value` | Get element at a specific index. |
 | `LSET` | `LSET key index value` | `+OK` | Set element at a specific index. |
 | `LPOP` | `LPOP key` | `$value` | Remove and return the first element. |
 | `RPOP` | `RPOP key` | `$value` | Remove and return the last element. |
@@ -66,8 +65,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `DBSIZE` | `DBSIZE` | `:count` | Number of keys in the database. Simpler than `INFO`. |
-| `SAVE` | `SAVE` | `+OK` | Manually trigger a save to disk. You already have `save_database()`. |
 | `SELECT` | `SELECT index` | `+OK` | Switch between numbered databases (0-15). Requires multiple `g_database` maps. |
 | `ECHO` | `ECHO message` | `$message` | Returns the message back. Useful for testing. |
 | `COMMAND` | `COMMAND` | list of commands | Returns info about available commands. Useful for redis-cli compatibility. |
