@@ -301,6 +301,30 @@ void cmd_lindex(int client_fd, const std::vector<std::string>& args){
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
+void cmd_lpop(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  LIST_CHECK(args[1]);
+
+  auto& list = g_database[args[1]].list;
+  std::string val = list.front();
+  list.pop_front();
+  std::string response = "$" + std::to_string(val.length()) + "\r\n" + val + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
+void cmd_rpop(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  LIST_CHECK(args[1]);
+
+  auto& list = g_database[args[1]].list;
+  std::string val = list.back();
+  list.pop_back();
+  std::string response = "$" + std::to_string(val.length()) + "\r\n" + val + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
 // hash commands
 
 void cmd_hset(int client_fd, const std::vector<std::string>& args){
@@ -378,7 +402,9 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args){
     {"LLEN",     cmd_llen},
     {"STRLEN",   cmd_strlen},
     {"DBSIZE",   cmd_dbsize},
-    {"LINDEX",   cmd_lindex}
+    {"LINDEX",   cmd_lindex},
+    {"LPOP",     cmd_lpop},
+    {"RPOP",     cmd_rpop}
   };
 
   auto it = commands.find(args[0]);

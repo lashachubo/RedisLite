@@ -59,6 +59,8 @@ nc localhost 6379
 | `DEL` | `DEL [key]` | Delete existing key |
 | `LPUSH` | `LPUSH [key] [value]` | Inserts a value at the head of the list. Returns the list length |
 | `RPUSH` | `RPUSH [key] [value]` | Insert value at the end of the list |
+| `LPOP` | `LPOP [key]` | Remove and return the first element |
+| `RPOP` | `RPOP [key]` | Remove and return the last element |
 | `LRANGE` | `LRANGE [key] [start] [end]` | Returns elements from the list between start and end indices |
 | `LINDEX` | `LINDEX [key] [index]` | Get element at a specific index |
 | `LTRIM` | `LTRIM [start_index] [end_index]` | Trim a list |

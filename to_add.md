@@ -28,8 +28,6 @@
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
 | `LSET` | `LSET key index value` | `+OK` | Set element at a specific index. |
-| `LPOP` | `LPOP key` | `$value` | Remove and return the first element. |
-| `RPOP` | `RPOP key` | `$value` | Remove and return the last element. |
 | `LINSERT` | `LINSERT key BEFORE\|AFTER pivot value` | `:new_length` | Insert a value before or after another value in the list. |
 
 ---
