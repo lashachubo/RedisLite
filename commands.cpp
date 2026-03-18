@@ -357,6 +357,7 @@ void cmd_hgetall(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(2);
   KEY_CHECK(args[1]);
   HASH_CHECK(args[1]);
+  
   auto& h = g_database[args[1]].hash;
   std::string response = "*" + std::to_string(h.size() * 2) + "\r\n\n";
   for (auto& [field, val] : h) {
