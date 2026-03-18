@@ -69,6 +69,7 @@ nc localhost 6379
 | `APPEND` | `APPEND [key] [value]` | Append a value to a key |
 | `HSET` | `HSET [key] [field] [value]` | Set a key value pair in hash |
 | `HGET` | `HGET [key] [field]` | Get a value from hash |
+| `HGETALL` | `HGETALL [key]` | Get all field and values from key |
 | `EXISTS` | `EXISTS [key]` | Check if key exists |
 | `PING` | `PING` | Returns `+PONG` if server is alive |
 | `INFO` | `INFO` | Get total key ammounts and clients connected |

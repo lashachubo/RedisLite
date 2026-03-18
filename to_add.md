@@ -35,8 +35,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `HMSET` | `HMSET key f1 v1 f2 v2` | `+OK` | Set multiple fields at once. |
-| `HMGET` | `HMGET key f1 f2` | `*array` | Get multiple fields at once. |
 | `HGETALL` | `HGETALL key` | `*array` | Get all fields and values. |
 | `HDEL` | `HDEL key field` | `:1` or `:0` | Delete a field from a hash. |
 | `HEXISTS` | `HEXISTS key field` | `:1` or `:0` | Check if a field exists. |

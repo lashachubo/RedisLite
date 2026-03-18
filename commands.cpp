@@ -341,13 +341,31 @@ void cmd_hset(int client_fd, const std::vector<std::string>& args){
 
 void cmd_hget(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+
   auto it = g_database.find(args[1]);
-  if(it == g_database.end()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
-  auto fit = it->second.hash.find(args[2]);
-  if (fit == it->second.hash.end()) { send(client_fd, "$-1\r\n\n", 6, 0); return; }
-  std::string response = "$" + std::to_string(fit->second.length()) + "\r\n" + fit->second + "\r\n\n";
+  for (size_t i = 2; i < args.size(); i++) {
+    auto fit = it->second.hash.find(args[i]);
+    if (fit == it->second.hash.end()) { send(client_fd, "$-1\r\n\n", 6, 0); continue; }
+    std::string response = "$" + std::to_string(fit->second.length()) + "\r\n" + fit->second + "\r\n\n";
+    send(client_fd, response.c_str(), response.length(), 0);
+  }
+}
+
+void cmd_hgetall(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+  auto& h = g_database[args[1]].hash;
+  std::string response = "*" + std::to_string(h.size() * 2) + "\r\n\n";
+  for (auto& [field, val] : h) {
+    response += "$" + std::to_string(field.length()) + "\r\n" + field + "\r\n\n";
+    response += "$" + std::to_string(val.length()) + "\r\n" + val + "\r\n\n";
+  }
   send(client_fd, response.c_str(), response.length(), 0);
 }
+
 
 // server info 
 
@@ -432,7 +450,8 @@ std::unordered_map<std::string, Handler> commands = {
     {"RPOP",     cmd_rpop},
     {"ECHO",     cmd_echo},
     {"HELP",     cmd_help},
-    {"TYPE",     cmd_type}
+    {"TYPE",     cmd_type},
+    {"HGETALL",  cmd_hgetall}
   };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){
