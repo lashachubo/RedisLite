@@ -43,11 +43,8 @@ nc localhost 6379
 
 | Command | Syntax | Description |
 |---|---|---|
-| `PING` | `PING` | Returns `+PONG` if server is alive |
-| `INFO` | `INFO` | Get total key ammounts and clients connected |
-| `FLUSHALL` | `FLUSHALL` | Clear the entire database |
+| `HELP` | `HELP` | List all available commands |
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
-| `DBSIZE` | `DBSIZE` | Returns the number of keys in the database |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
 | `EX` | `EX [key] [seconds]` | Add expiration to a key |
 | `PERSIST` | `PERSIST [key]` | Remove the expiration from a key |
@@ -73,6 +70,12 @@ nc localhost 6379
 | `HSET` | `HSET [key] [field] [value]` | Set a key value pair in hash |
 | `HGET` | `HGET [key] [field]` | Get a value from hash |
 | `EXISTS` | `EXISTS [key]` | Check if key exists |
+| `PING` | `PING` | Returns `+PONG` if server is alive |
+| `INFO` | `INFO` | Get total key ammounts and clients connected |
+| `TYPE` | `TYPE [key]` | Return the type of value stored at key |
+| `ECHO` | `ECHO [message]` | Returns a message back |
+| `DBSIZE` | `DBSIZE` | Returns the number of keys in the database |
+| `FLUSHALL` | `FLUSHALL` | Clear the entire database |
 
 ## Project Structure
 

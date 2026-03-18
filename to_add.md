@@ -17,7 +17,6 @@
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
 | `KEYS` | `KEYS pattern` | `*array` | List all keys matching a pattern. `*` = all keys. Slow on large DBs. |
-| `TYPE` | `TYPE key` | `+string` or `+list` etc. | Returns the type of value stored at key. |
 | `TTL` | `TTL key` | `:seconds` | How many seconds until the key expires. `-1` = no expiry, `-2` = doesn't exist. |
 | `RANDOMKEY` | `RANDOMKEY` | `$key` | Returns a random key from the database. |
 
@@ -64,5 +63,3 @@
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
 | `SELECT` | `SELECT index` | `+OK` | Switch between numbered databases (0-15). Requires multiple `g_database` maps. |
-| `ECHO` | `ECHO message` | `$message` | Returns the message back. Useful for testing. |
-| `COMMAND` | `COMMAND` | list of commands | Returns info about available commands. Useful for redis-cli compatibility. |

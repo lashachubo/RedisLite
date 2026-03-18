@@ -264,7 +264,7 @@ void cmd_persist(int client_fd, const std::vector<std::string>& args){
 void cmd_expire(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(3);
   KEY_CHECK(args[1]);
-  NOT_LIST(args[1]);
+  KV_CHECK(args[1]);
 
   g_database[args[1]].expires_at = now_ms() + (std::stoll(args[2]) * 1000);
   send(client_fd, "+OK\r\n\n", 6, 0);
@@ -282,7 +282,7 @@ void cmd_llen(int client_fd, const std::vector<std::string>& args){
 void cmd_strlen(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(2);
   KEY_CHECK(args[1]);
-  NOT_LIST(args[1]);
+  KV_CHECK(args[1]);
 
   std::string response = "$" + std::to_string(g_database[args[1]].value.size()) + "\r\n\n";
   send(client_fd, response.c_str(), response.length(), 0);
@@ -372,10 +372,35 @@ void cmd_flushall(int client_fd, const std::vector<std::string>& args){
   send(client_fd, "+OK\r\n\n", 6, 0);
 }
 
-void process_and_reply(int client_fd, const std::vector<std::string>& args){
-  if (args.empty()) return;
+void cmd_echo(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
 
-  static std::unordered_map<std::string, Handler> commands = {
+  std::string response = "$";
+  for(size_t i{1}; i < args.size(); i++){
+    response += args[i];
+    if(i < args.size()){ response += " "; }
+  }
+  response += "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
+void cmd_type(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  
+  auto it = g_database.find(args[1]);
+  std::string response = "+";
+  if (it->second.is_list) response += "list";
+  else if (!it->second.hash.empty()) response += "hash";
+  else response += "string";
+
+  response += "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
+void cmd_help(int client_fd, const std::vector<std::string>& args);
+
+std::unordered_map<std::string, Handler> commands = {
     {"SET",      cmd_set},
     {"GET",      cmd_get},
     {"DEL",      cmd_del},
@@ -404,13 +429,27 @@ void process_and_reply(int client_fd, const std::vector<std::string>& args){
     {"DBSIZE",   cmd_dbsize},
     {"LINDEX",   cmd_lindex},
     {"LPOP",     cmd_lpop},
-    {"RPOP",     cmd_rpop}
+    {"RPOP",     cmd_rpop},
+    {"ECHO",     cmd_echo},
+    {"HELP",     cmd_help},
+    {"TYPE",     cmd_type}
   };
 
+void process_and_reply(int client_fd, const std::vector<std::string>& args){
+  if (args.empty()) return;
   auto it = commands.find(args[0]);
   if (it != commands.end()) {
     it->second(client_fd, args);
   } else {
     send(client_fd, "-ERR unknown command\r\n\n", 23, 0);
   }
+}
+
+void cmd_help(int client_fd, const std::vector<std::string>& args){
+  std::string response = "For full explanation visit:\nhttps://github.com/lashachubo/RedisLite?tab=readme-ov-file#supported-commands\n";
+  for(auto& [str, _] : commands){
+    response += str + "\n";
+  }
+  response += "\r\n";
+  send(client_fd, response.c_str(), response.length(), 0);
 }

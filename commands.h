@@ -17,8 +17,11 @@ extern std::unordered_map<int, std::string> client_buffers;
 #define LIST_CHECK(key) \
   if (!g_database[key].is_list) { send(client_fd, "-WRONGTYPE that key does not hold a list\r\n\n", 43, 0); return; }
 
-#define NOT_LIST(key) \
+#define KV_CHECK(key) \
   if (g_database[key].is_list) { send(client_fd, "-WRONGTYPE key holds a list\r\n\n", 30, 0); return; }
+
+#define HASH_CHECK(key) \
+  if (g_database[key].hash.empty()) { send(client_fd, "-WRONGTYPE that key does not hold a hash\r\n\n", 43, 0); return; }
 
 std::vector<std::string> split_command(std::string cmd);
 void process_and_reply(int client_fd, const std::vector<std::string>& args);
