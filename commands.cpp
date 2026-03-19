@@ -387,6 +387,48 @@ void cmd_hfdel(int client_fd, const std::vector<std::string>& args){
   send(client_fd, ":1\r\n\n", 5, 0);
 }
 
+void cmd_hexists(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+
+  auto& h = g_database[args[1]].hash;
+  std::string response = ":" + std::to_string(h.count(args[2])) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
+void cmd_hlen(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+
+  std::string response = ":" + std::to_string(g_database[args[1]].hash.size()) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
+void cmd_hfields(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+
+  auto& h = g_database[args[1]].hash;
+  for(auto& [field, value] : h){
+    std::string response = "$" + std::to_string(field.length()) + "\r\n" + field + "\r\n\n";
+    send(client_fd, response.c_str(), response.length(), 0);
+  }
+}
+
+void cmd_hvals(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+
+  auto& h = g_database[args[1]].hash;
+  for(auto& [field, value] : h){
+    std::string response = "$" + std::to_string(value.length()) + "\r\n" + value + "\r\n\n";
+    send(client_fd, response.c_str(), response.length(), 0);
+  }
+}
 
 // server info 
 
@@ -474,7 +516,11 @@ std::unordered_map<std::string, Handler> commands = {
     {"TYPE",     cmd_type},
     {"HGETALL",  cmd_hgetall},
     {"HDEL",     cmd_hdel},
-    {"HFDEL",    cmd_hfdel}
+    {"HFDEL",    cmd_hfdel},
+    {"HEXISTS",  cmd_hexists},
+    {"HLEN",     cmd_hlen},
+    {"HFIELDS",  cmd_hfields},
+    {"HVALS",    cmd_hvals}
   };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){

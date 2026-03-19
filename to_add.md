@@ -35,10 +35,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `HEXISTS` | `HEXISTS key field` | `:1` or `:0` | Check if a field exists. |
-| `HLEN` | `HLEN key` | `:count` | Number of fields in the hash. |
-| `HKEYS` | `HKEYS key` | `*array` | All field names. |
-| `HVALS` | `HVALS key` | `*array` | All field values. |
 
 ---
 
