@@ -367,6 +367,26 @@ void cmd_hgetall(int client_fd, const std::vector<std::string>& args){
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
+void cmd_hdel(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+
+  g_database.erase(args[1]);
+  send(client_fd, ":1\r\n\n", 5, 0);
+}
+
+void cmd_hfdel(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(3);
+  KEY_CHECK(args[1]);
+  HASH_CHECK(args[1]);
+
+  auto& it = g_database[args[1]];
+  it.hash.erase(args[2]);
+
+  send(client_fd, ":1\r\n\n", 5, 0);
+}
+
 
 // server info 
 
@@ -452,7 +472,9 @@ std::unordered_map<std::string, Handler> commands = {
     {"ECHO",     cmd_echo},
     {"HELP",     cmd_help},
     {"TYPE",     cmd_type},
-    {"HGETALL",  cmd_hgetall}
+    {"HGETALL",  cmd_hgetall},
+    {"HDEL",     cmd_hdel},
+    {"HFDEL",    cmd_hfdel}
   };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){

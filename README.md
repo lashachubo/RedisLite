@@ -70,6 +70,8 @@ nc localhost 6379
 | `HSET` | `HSET [key] [field] [value]` | Set a key value pair in hash |
 | `HGET` | `HGET [key] [field]` | Get a value from hash |
 | `HGETALL` | `HGETALL [key]` | Get all field and values from key |
+| `HFDEL` | `HFDEL [key] [field]` | Delete a field from hash |
+| `HDEL` | `HDEL [key]` | Delete the whole hash |
 | `EXISTS` | `EXISTS [key]` | Check if key exists |
 | `PING` | `PING` | Returns `+PONG` if server is alive |
 | `INFO` | `INFO` | Get total key ammounts and clients connected |
