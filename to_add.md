@@ -42,7 +42,6 @@
 
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
-| `SADD` | `SADD key value` | `:1` or `:0` | Add a value to the set. Returns 0 if already existed. |
 | `SREM` | `SREM key value` | `:1` or `:0` | Remove a value from the set. |
 | `SMEMBERS` | `SMEMBERS key` | `*array` | Return all members of the set. |
 | `SISMEMBER` | `SISMEMBER key value` | `:1` or `:0` | Check if a value is in the set. |

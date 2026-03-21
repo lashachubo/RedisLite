@@ -76,6 +76,7 @@ nc localhost 6379
 | `HFDEL` | `HFDEL [key] [field]` | Delete a field from hash |
 | `HDEL` | `HDEL [key]` | Delete the whole hash |
 | `HEXISTS` | `HEXISTS [key] [field]` | Check if field exists |
+| `SADD` | `SADD [key] [value]` | Add a value to set |
 | `EXISTS` | `EXISTS [key]` | Check if key exists |
 | `PING` | `PING` | Returns `+PONG` if server is alive |
 | `INFO` | `INFO` | Get total key ammounts and clients connected |

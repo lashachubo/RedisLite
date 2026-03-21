@@ -430,6 +430,23 @@ void cmd_hvals(int client_fd, const std::vector<std::string>& args){
   }
 }
 
+// Set commands
+
+void cmd_sadd(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(3);
+
+  auto& set = g_database[args[1]].set;
+  for(size_t i {2}; i < args.size(); i++){
+    if(set.count(args[i])){
+      send(client_fd, "-ERR already in set\r\n\n", 22, 0);
+      return;
+    }
+    set.insert(args[i]);
+    std::string response = "$" + std::to_string(args[i].length()) +"\r\n:1\r\n\n"; 
+    send(client_fd, response.c_str(), response.length(), 0);
+  }
+}
+
 // server info 
 
 void cmd_info(int client_fd, const std::vector<std::string>& args){
@@ -520,7 +537,8 @@ std::unordered_map<std::string, Handler> commands = {
     {"HEXISTS",  cmd_hexists},
     {"HLEN",     cmd_hlen},
     {"HFIELDS",  cmd_hfields},
-    {"HVALS",    cmd_hvals}
+    {"HVALS",    cmd_hvals},
+    {"SADD",     cmd_sadd}
   };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){
