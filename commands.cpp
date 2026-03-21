@@ -439,10 +439,10 @@ void cmd_sadd(int client_fd, const std::vector<std::string>& args){
   for(size_t i {2}; i < args.size(); i++){
     if(set.count(args[i])){
       send(client_fd, "-ERR already in set\r\n\n", 22, 0);
-      return;
+      continue;
     }
     set.insert(args[i]);
-    std::string response = "$" + std::to_string(args[i].length()) +"\r\n:1\r\n\n"; 
+    std::string response = ":1\r\n\n"; 
     send(client_fd, response.c_str(), response.length(), 0);
   }
 }
