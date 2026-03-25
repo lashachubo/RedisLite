@@ -325,6 +325,23 @@ void cmd_rpop(int client_fd, const std::vector<std::string>& args){
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
+void cmd_ttl(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+
+  auto& it = g_database[args[1]];
+  if (it.expires_at == 0) { send(client_fd, ":-1\r\n\n", 6, 0); return; }
+  long time = (it.expires_at - now_ms()) / 1000;
+  if(time < 0){
+    std::string response = "-ERR expired " + std::to_string(time) + " seconds ago\r\n\n"; 
+    g_database.erase(args[1]);
+    send(client_fd, response.c_str(), response.length(), 0);
+    return;
+  }
+  std::string response = "$" + std::to_string(time) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
 // hash commands
 
 void cmd_hset(int client_fd, const std::vector<std::string>& args){
@@ -504,41 +521,14 @@ std::unordered_map<std::string, Handler> commands = {
     {"DEL",      cmd_del},
     {"LPUSH",    cmd_lpush},
     {"RPUSH",    cmd_rpush},
-    {"LRANGE",   cmd_lrange},
-    {"LTRIM",    cmd_ltrim},
-    {"RENAME",   cmd_rename},
-    {"INFO",     cmd_info},
-    {"PING",     cmd_ping},
-    {"FLUSHALL", cmd_flushall},
-    {"INCR",     cmd_incr},
-    {"INCRBY",   cmd_incrby},    
-    {"DECR",     cmd_decr},
-    {"DECRBY",   cmd_decrby},
-    {"APPEND",   cmd_append},
-    {"HSET",     cmd_hset},
-    {"HGET",     cmd_hget},
-    {"MSET",     cmd_mset},
-    {"MGET",     cmd_mget},
-    {"EXISTS",   cmd_exists},
-    {"PERSIST",  cmd_persist},
-    {"EXPIRE",   cmd_expire},
-    {"LLEN",     cmd_llen},
-    {"STRLEN",   cmd_strlen},
-    {"DBSIZE",   cmd_dbsize},
-    {"LINDEX",   cmd_lindex},
-    {"LPOP",     cmd_lpop},
-    {"RPOP",     cmd_rpop},
-    {"ECHO",     cmd_echo},
-    {"HELP",     cmd_help},
-    {"TYPE",     cmd_type},
-    {"HGETALL",  cmd_hgetall},
     {"HDEL",     cmd_hdel},
     {"HFDEL",    cmd_hfdel},
     {"HEXISTS",  cmd_hexists},
     {"HLEN",     cmd_hlen},
     {"HFIELDS",  cmd_hfields},
     {"HVALS",    cmd_hvals},
-    {"SADD",     cmd_sadd}
+    {"SADD",     cmd_sadd},
+    {"TTL",      cmd_ttl}
   };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){

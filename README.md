@@ -47,6 +47,7 @@ nc localhost 6379
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
 | `EX` | `EX [key] [seconds]` | Add expiration to a key |
+| `TTL` | `TTL [key]` | Retruns a time till expiration |
 | `PERSIST` | `PERSIST [key]` | Remove the expiration from a key |
 | `RENAME` | `RENAME [key] [new_key]` | Rename existing keys |
 | `STRLEN` | `STRLEN [key]` | Returns the lenght of the string |
