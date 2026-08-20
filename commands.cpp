@@ -498,6 +498,48 @@ void cmd_type(int client_fd, const std::vector<std::string>& args){
 
 void cmd_help(int client_fd, const std::vector<std::string>& args);
 
+std::unordered_map<std::string, Handler> commands = {
+    {"SET",      cmd_set},
+    {"GET",      cmd_get},
+    {"DEL",      cmd_del},
+    {"LPUSH",    cmd_lpush},
+    {"RPUSH",    cmd_rpush},
+    {"LRANGE",   cmd_lrange},
+    {"LTRIM",    cmd_ltrim},
+    {"RENAME",   cmd_rename},
+    {"INFO",     cmd_info},
+    {"PING",     cmd_ping},
+    {"FLUSHALL", cmd_flushall},
+    {"INCR",     cmd_incr},
+    {"INCRBY",   cmd_incrby},    
+    {"DECR",     cmd_decr},
+    {"DECRBY",   cmd_decrby},
+    {"APPEND",   cmd_append},
+    {"HSET",     cmd_hset},
+    {"HGET",     cmd_hget},
+    {"MSET",     cmd_mset},
+    {"MGET",     cmd_mget},
+    {"EXISTS",   cmd_exists},
+    {"PERSIST",  cmd_persist},
+    {"EXPIRE",   cmd_expire},
+    {"LLEN",     cmd_llen},
+    {"STRLEN",   cmd_strlen},
+    {"DBSIZE",   cmd_dbsize},
+    {"LINDEX",   cmd_lindex},
+    {"LPOP",     cmd_lpop},
+    {"RPOP",     cmd_rpop},
+    {"ECHO",     cmd_echo},
+    {"HELP",     cmd_help},
+    {"TYPE",     cmd_type},
+    {"HGETALL",  cmd_hgetall},
+    {"HDEL",     cmd_hdel},
+    {"HFDEL",    cmd_hfdel},
+    {"HEXISTS",  cmd_hexists},
+    {"HLEN",     cmd_hlen},
+    {"HFIELDS",  cmd_hfields},
+    {"HVALS",    cmd_hvals},
+    {"SADD",     cmd_sadd}
+  };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){
   if (args.empty()) return;
