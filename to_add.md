@@ -17,7 +17,6 @@
 | Command | Syntax | Returns | Notes |
 |---|---|---|---|
 | `KEYS` | `KEYS pattern` | `*array` | List all keys matching a pattern. `*` = all keys. Slow on large DBs. |
-| `TTL` | `TTL key` | `:seconds` | How many seconds until the key expires. `-1` = no expiry, `-2` = doesn't exist. |
 | `RANDOMKEY` | `RANDOMKEY` | `$key` | Returns a random key from the database. |
 
 ---
