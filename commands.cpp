@@ -499,7 +499,6 @@ void cmd_type(int client_fd, const std::vector<std::string>& args){
 void cmd_help(int client_fd, const std::vector<std::string>& args);
 
 
-
 void process_and_reply(int client_fd, const std::vector<std::string>& args){
   if (args.empty()) return;
   auto it = commands.find(args[0]);
