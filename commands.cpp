@@ -539,6 +539,7 @@ std::unordered_map<std::string, Handler> commands = {
     {"HFIELDS",  cmd_hfields},
     {"HVALS",    cmd_hvals},
     {"SADD",     cmd_sadd}
+    
   };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){
