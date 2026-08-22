@@ -46,7 +46,7 @@ nc localhost 6379
 | `HELP` | `HELP` | List all available commands |
 | `SET` | `SET [key] [value]` | Stores a value under the given key |
 | `SET` with expiry | `SET [key] [value] EX [seconds]` | Stores a value that expires after X seconds |
-| `EX` | `EX [key] [seconds]` | Add expiration to a key |
+| `EXPIRE` | `EX [key] [seconds]` | Add expiration to a key |
 | `PERSIST` | `PERSIST [key]` | Remove the expiration from a key |
 | `RENAME` | `RENAME [key] [new_key]` | Rename existing keys |
 | `STRLEN` | `STRLEN [key]` | Returns the lenght of the string |
@@ -84,6 +84,7 @@ nc localhost 6379
 | `ECHO` | `ECHO [message]` | Returns a message back |
 | `DBSIZE` | `DBSIZE` | Returns the number of keys in the database |
 | `FLUSHALL` | `FLUSHALL` | Clear the entire database |
+| `TTL` | `TTL [key]` | Check how many seconds are left till deletion |
 
 ## Project Structure
 

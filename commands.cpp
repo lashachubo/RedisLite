@@ -268,6 +268,7 @@ void cmd_expire(int client_fd, const std::vector<std::string>& args){
 
   g_database[args[1]].expires_at = now_ms() + (std::stoll(args[2]) * 1000);
   send(client_fd, "+OK\r\n\n", 6, 0);
+  g_database.erase(args[1]);
 }
 
 void cmd_llen(int client_fd, const std::vector<std::string>& args){
@@ -496,6 +497,19 @@ void cmd_type(int client_fd, const std::vector<std::string>& args){
   send(client_fd, response.c_str(), response.length(), 0);
 }
 
+void cmd_ttl(int client_fd, const std::vector<std::string>& args){
+  ARGS_CHECK(2);
+  KEY_CHECK(args[1]);
+
+  if(g_database[args[1]].expires_at == 0){
+    send(client_fd, "-1\r\n\n", 5, 0);
+    return;
+  }
+
+  std::string response = "$" + std::to_string((g_database[args[1]].expires_at - now_ms()) / 1000) + "\r\n\n";
+  send(client_fd, response.c_str(), response.length(), 0);
+}
+
 void cmd_help(int client_fd, const std::vector<std::string>& args);
 
 std::unordered_map<std::string, Handler> commands = {
@@ -538,7 +552,8 @@ std::unordered_map<std::string, Handler> commands = {
     {"HLEN",     cmd_hlen},
     {"HFIELDS",  cmd_hfields},
     {"HVALS",    cmd_hvals},
-    {"SADD",     cmd_sadd}
+    {"SADD",     cmd_sadd},
+    {"TTL",      cmd_ttl}
   };
 
 void process_and_reply(int client_fd, const std::vector<std::string>& args){
