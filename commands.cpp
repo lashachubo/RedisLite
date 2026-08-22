@@ -268,7 +268,6 @@ void cmd_expire(int client_fd, const std::vector<std::string>& args){
 
   g_database[args[1]].expires_at = now_ms() + (std::stoll(args[2]) * 1000);
   send(client_fd, "+OK\r\n\n", 6, 0);
-  g_database.erase(args[1]);
 }
 
 void cmd_llen(int client_fd, const std::vector<std::string>& args){
