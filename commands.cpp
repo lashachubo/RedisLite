@@ -499,9 +499,17 @@ void cmd_type(int client_fd, const std::vector<std::string>& args){
 void cmd_ttl(int client_fd, const std::vector<std::string>& args){
   ARGS_CHECK(2);
   KEY_CHECK(args[1]);
+  
+  long long& ttl = g_database[args[1]].expires_at;
 
-  if(g_database[args[1]].expires_at == 0){
-    send(client_fd, "-1\r\n\n", 5, 0);
+  if(ttl == 0){
+    send(client_fd, "$-1\r\n\n", 6, 0);
+    return;
+  }
+
+  if((ttl != 0) && (now_ms() > ttl)) {
+    g_database.erase(args[1]);
+    send(client_fd, "$0\r\n\n", 5, 0);
     return;
   }
 
